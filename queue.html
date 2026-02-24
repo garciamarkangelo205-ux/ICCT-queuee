@@ -50,47 +50,41 @@
   statusDiv.className = "";
 
   try {
-    const res = await fetch(SCRIPT_URL + "?action=display");
-    if (!res.ok) {
-      throw new Error(`Server responded with ${res.status}: ${res.statusText}`);
-    }
+  const res = await fetch(SCRIPT_URL + "?action=display");
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
-    const data = await res.json();
+  const data = await res.json();
 
-    tbody.innerHTML = "";
+  tbody.innerHTML = "";
 
-    if (data.length <= 1 || data[1].every(cell => cell === "")) {
-      tbody.innerHTML = '<tr><td colspan="5" class="no-data">No queue entries yet</td></tr>';
-      statusDiv.textContent = "Queue is empty";
-      return;
-    }
-
-    const rows = data.slice(1).filter(row => row.some(cell => cell.trim() !== "")); // skip empty rows
-    rows.reverse(); // newest first
-
-    rows.forEach((row, i) => {
-      if (row.length < 9) return;
-      const tr = document.createElement('tr');
-      if (i === 0) tr.classList.add('now-serving');
-
-      tr.innerHTML = `
-        <td>#${row[8] || (i+1)}</td>
-        <td>${row[3] || ''} ${row[4] || ''}</td>
-        <td>${row[2] || ''}</td>
-        <td>${row[0] || ''} ${row[1] || ''}</td>
-        <td>${row[7] || ''}</td>
-      `;
-      tbody.appendChild(tr);
-    });
-
-    statusDiv.textContent = `Loaded ${rows.length} entries (refreshes every 15s)`;
-
-  } catch (e) {
-    console.error("Queue fetch error:", e);
-    statusDiv.textContent = "Error: " + e.message + ". Check if you submitted entries.";
-    statusDiv.className = "error";
-    tbody.innerHTML = '<tr><td colspan="5" class="no-data">Failed to load. Open console (F12) for details.</td></tr>';
+  if (data.length <= 1) {
+    tbody.innerHTML = '<tr><td colspan="5" class="no-data">No queue entries yet</td></tr>';
+    statusDiv.textContent = "Queue is empty";
+    return;
   }
+
+  const rows = data.slice(1).filter(row => row.some(cell => cell.trim() !== ""));
+  rows.reverse(); // newest first
+
+  rows.forEach((row, i) => {
+    if (row.length < 9) return;
+    const tr = document.createElement('tr');
+    if (i === 0) tr.classList.add('now-serving');
+
+    tr.innerHTML = `
+      <td>#${row[8] || (i+1)}</td>
+      <td>${row[3] || ''} ${row[4] || ''}</td>
+      <td>${row[2] || ''}</td>
+      <td>${row[0] || ''} ${row[1] || ''}</td>
+      <td>${row[7] || ''}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+
+  statusDiv.textContent = `Loaded ${rows.length} entries`;
+} catch (e) {
+  statusDiv.textContent = "Error: " + e.message;
+  statusDiv.className = "error";
 }
 
     loadQueue();
@@ -99,6 +93,7 @@
 </body>
 
 </html>
+
 
 
 
