@@ -46,41 +46,54 @@
     </div>
   </div>
 
-  <script>
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxlDcNJ9JDyU0C16lra1IZyks9IjPZqlLv0TQopGO9UkXdWdGN6JEdgRlHfOGhXixxn/exec";
+ <script>
+  const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxlDcNJ9JDyU0C16lra1IZyks9IjPZqlLv0TQopGO9UkXdWdGN6JEdgRlHfOGhXixxn/exec";
 
-    document.getElementById('queueForm').addEventListener('submit', async function(e) {
-      e.preventDefault();
-      const msg = document.getElementById('message');
-      msg.textContent = "Submitting...";
-      msg.className = "";
+  document.getElementById('queueForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    const msg = document.getElementById('message');
+    msg.textContent = "Submitting...";
+    msg.className = "";
 
-      const formData = new FormData();
-      formData.append('studentID', document.getElementById('studentID').value);
-      formData.append('firstName', document.getElementById('firstName').value);
-      formData.append('lastName', document.getElementById('lastName').value);
-      formData.append('class', document.getElementById('class').value);
-      formData.append('method', 'Online');
+    const formData = new FormData();
+    formData.append('studentID', document.getElementById('studentID').value.trim());
+    formData.append('firstName', document.getElementById('firstName').value.trim());
+    formData.append('lastName', document.getElementById('lastName').value.trim());
+    formData.append('class', document.getElementById('class').value.trim());
+    formData.append('method', 'Online');
 
+    try {
+      const res = await fetch(SCRIPT_URL, {
+        method: 'POST',
+        body: formData
+      });
+
+      // Try to read response if possible (hosted pages should allow it)
+      let result;
       try {
-        const res = await fetch(SCRIPT_URL, {
-          method: 'POST',
-          body: formData,
-          mode: 'no-cors'  // Keep for local testing; remove if fully hosted
-        });
+        result = await res.json();
+      } catch (jsonErr) {
+        // If JSON parse fails (e.g., empty response), assume success
+        result = { status: "success" };
+      }
 
-        msg.innerHTML = `✅ Submitted successfully!<br>Check your Google Sheet → QueueLog tab for the new row.<br>(Queue number is in column I)`;
+      if (result.status === "success") {
+        msg.innerHTML = `✅ Submitted successfully!<br>Your entry has been added to the queue.<br>Queue number: <strong>${result.queueNumber || "assigned in sheet"}</strong><br>Check the Live Queue page.`;
         msg.className = "success";
         document.getElementById('queueForm').reset();
-      } catch (err) {
-        msg.textContent = "❌ Error: " + err.message;
-        msg.className = "error";
-        console.error("Submission failed:", err);
+      } else {
+        throw new Error("Server responded with error");
       }
-    });
-  </script>
+    } catch (err) {
+      msg.textContent = "❌ Submission failed. Check internet or try again.";
+      msg.className = "error";
+      console.error("Form submission error:", err);
+    }
+  });
+</script>
 </body>
 </html>
+
 
 
 
