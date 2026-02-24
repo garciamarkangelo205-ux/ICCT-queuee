@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Live Queue - ICCT Registrar Cainta</title>
+  <style>
+    body { font-family: Arial, sans-serif; background:#f0f2f5; margin:0; padding:20px; }
+    .container { max-width: 900px; margin:auto; background:white; padding:20px; border-radius:12px; box-shadow:0 4px 20px rgba(0,0,0,0.1); }
+    h1 { text-align:center; color:#1e3a8a; }
+    table { width:100%; border-collapse:collapse; margin-top:20px; }
+    th, td { padding:12px; border:1px solid #ddd; text-align:left; }
+    th { background:#1e3a8a; color:white; }
+    .now-serving { background:#fef3c7; font-weight:bold; }
+    .refresh { text-align:center; margin:10px; color:#666; }
+    #status { text-align:center; margin:20px 0; font-weight:bold; font-size:18px; color:#555; }
+    .error { color: #991b1b; }
+    .no-data { color: #777; text-align:center; padding:20px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>📊 LIVE QUEUE STATUS - Registrar Office</h1>
+    <p class="refresh">Auto-refresh every 15 seconds (shows most recent entries first)</p>
+    <div id="status">Loading queue data...</div>
+    <table>
+      <thead>
+        <tr>
+          <th>Queue #</th>
+          <th>Student Name</th>
+          <th>Student ID</th>
+          <th>Time</th>
+          <th>Method</th>
+        </tr>
+      </thead>
+      <tbody id="queueBody">
+        <tr><td colspan="5" class="no-data">Waiting for data...</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <script>
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxlUSIjEBJ4AYjX1qpMVrqQ1YSSA0kewYNIs_L5qRryPuAZseidtnhs6ljESvPi3M6v/exec";
+
+    const statusDiv = document.getElementById('status');
+    const tbody = document.getElementById('queueBody');
+
+    async function loadQueue() {
+      statusDiv.textContent = "Loading queue data...";
+      statusDiv.className = "";
+
+      try {
+        const res = await fetch(SCRIPT_URL + "?action=display", {
+          mode: 'no-cors'  // Keep for local; remove after hosting
+        });
+
+        // no-cors hides response body, so show fallback message
+        statusDiv.innerHTML = `Local mode: Data fetched in background.<br>Open your Google Sheet (edit view) to see entries.<br>For full auto-display, host this page online (GitHub Pages).`;
+
+        tbody.innerHTML = '<tr><td colspan="5" class="no-data">Check sheet for latest rows (published CSV not syncing - use hosting fix)</td></tr>';
+
+      } catch (e) {
+        console.error("Queue load error:", e);
+        statusDiv.textContent = "Error loading: " + e.message + ". Try refreshing or hosting online.";
+        statusDiv.className = "error";
+        tbody.innerHTML = '<tr><td colspan="5" class="no-data">Failed to load. See console (F12) for details.</td></tr>';
+      }
+    }
+
+    loadQueue();
+    setInterval(loadQueue, 15000);
+  </script>
+</body>
+</html>

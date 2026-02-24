@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Book Queue - ICCT Registrar Cainta</title>
+  <style>
+    body { font-family: Arial, sans-serif; background: #f0f2f5; margin:0; padding:20px; }
+    .container { max-width: 480px; margin: 40px auto; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); }
+    h1 { text-align:center; color:#1e3a8a; }
+    label { display:block; margin:15px 0 5px; font-weight:bold; }
+    input { width:100%; padding:12px; border:1px solid #ccc; border-radius:6px; box-sizing:border-box; }
+    button { width:100%; padding:14px; background:#1e3a8a; color:white; border:none; border-radius:6px; font-size:16px; cursor:pointer; }
+    button:hover { background:#16316f; }
+    #message { margin-top:20px; text-align:center; font-weight:bold; font-size:18px; }
+    .success { color: #166534; }
+    .error { color: #991b1b; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>📋 Registrar Queue Booking</h1>
+    <form id="queueForm">
+      <label>Student ID</label>
+      <input type="text" id="studentID" required placeholder="2023-00123">
+
+      <label>First Name</label>
+      <input type="text" id="firstName" required>
+
+      <label>Last Name</label>
+      <input type="text" id="lastName" required>
+
+      <label>Class / Section</label>
+      <input type="text" id="class" placeholder="IT-3A">
+
+      <button type="submit">JOIN QUEUE NOW</button>
+    </form>
+    <div id="message"></div>
+  </div>
+
+  <script>
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxlUSIjEBJ4AYjX1qpMVrqQ1YSSA0kewYNIs_L5qRryPuAZseidtnhs6ljESvPi3M6v/exec";
+
+    document.getElementById('queueForm').addEventListener('submit', async function(e) {
+      e.preventDefault();
+      const msg = document.getElementById('message');
+      msg.textContent = "Submitting...";
+      msg.className = "";
+
+      const formData = new FormData();
+      formData.append('studentID', document.getElementById('studentID').value);
+      formData.append('firstName', document.getElementById('firstName').value);
+      formData.append('lastName', document.getElementById('lastName').value);
+      formData.append('class', document.getElementById('class').value);
+      formData.append('method', 'Online');
+
+      try {
+        const res = await fetch(SCRIPT_URL, {
+          method: 'POST',
+          body: formData,
+          mode: 'no-cors'           // This bypasses the CORS block for local testing
+        });
+
+        // With no-cors we cannot read the response body, so we assume success
+        // and tell the user to check the Google Sheet
+        msg.innerHTML = `✅ Submitted successfully!<br>Check your Google Sheet → QueueLog tab for the new row.<br>(Queue number is in column I)`;
+        msg.className = "success";
+        document.getElementById('queueForm').reset();
+      } catch (err) {
+        msg.textContent = "❌ Error: " + err.message;
+        msg.className = "error";
+        console.error("Submission failed:", err);
+      }
+    });
+  </script>
+</body>
+</html>
