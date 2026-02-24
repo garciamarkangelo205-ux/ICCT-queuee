@@ -51,7 +51,7 @@
 
       try {
         const res = await fetch(SCRIPT_URL + "?action=display", {
-          mode: 'no-cors'  // Keep for local; remove after hosting
+            // Keep for local; remove after hosting
         });
 
         // no-cors hides response body, so show fallback message
@@ -71,4 +71,5 @@
     setInterval(loadQueue, 15000);
   </script>
 </body>
+
 </html>
