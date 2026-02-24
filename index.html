@@ -37,10 +37,11 @@
     </form>
     <div id="message"></div>
 
-    <!-- New button to go to queue page -->
+    <!-- View Live Queue Button with icon (Option 2) -->
     <div style="text-align:center; margin-top:30px;">
-      <a href="queue.html" style="display:inline-block; padding:14px 30px; background:#4CAF50; color:white; text-decoration:none; border-radius:6px; font-size:16px; font-weight:bold;">
-        View Live Queue Status →
+      <a href="queue.html" style="display:inline-flex; align-items:center; gap:10px; padding:14px 30px; background:#4CAF50; color:white; text-decoration:none; border-radius:6px; font-size:16px; font-weight:bold; box-shadow:0 2px 8px rgba(0,0,0,0.2);">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-13h2v6h-2zm0 8h2v2h-2z"/></svg>
+        View Live Queue Status
       </a>
     </div>
   </div>
@@ -65,7 +66,7 @@
         const res = await fetch(SCRIPT_URL, {
           method: 'POST',
           body: formData,
-          mode: 'no-cors'  // Keep for local; remove if hosted
+          mode: 'no-cors'  // Keep for local testing; remove if fully hosted
         });
 
         msg.innerHTML = `✅ Submitted successfully!<br>Check your Google Sheet → QueueLog tab for the new row.<br>(Queue number is in column I)`;
