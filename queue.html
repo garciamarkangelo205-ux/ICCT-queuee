@@ -50,22 +50,44 @@
       statusDiv.className = "";
 
       try {
-        const res = await fetch(SCRIPT_URL + "?action=display", {
-            // Keep for local; remove after hosting
-        });
+    const res = await fetch(SCRIPT_URL + "?action=display");
+  if (!res.ok) throw new Error(`HTTP error! Status: ${res.status}`);
 
-        // no-cors hides response body, so show fallback message
-        statusDiv.innerHTML = `Local mode: Data fetched in background.<br>Open your Google Sheet (edit view) to see entries.<br>For full auto-display, host this page online (GitHub Pages).`;
+  const data = await res.json();
 
-        tbody.innerHTML = '<tr><td colspan="5" class="no-data">Check sheet for latest rows (published CSV not syncing - use hosting fix)</td></tr>';
+  tbody.innerHTML = "";
 
-      } catch (e) {
-        console.error("Queue load error:", e);
-        statusDiv.textContent = "Error loading: " + e.message + ". Try refreshing or hosting online.";
-        statusDiv.className = "error";
-        tbody.innerHTML = '<tr><td colspan="5" class="no-data">Failed to load. See console (F12) for details.</td></tr>';
-      }
-    }
+  if (data.length <= 1) {
+    tbody.innerHTML = '<tr><td colspan="5" class="no-data">No queue entries yet</td></tr>';
+    statusDiv.textContent = "No data in queue";
+    return;
+  }
+
+  const rows = data.slice(1); // skip headers
+  rows.reverse(); // newest first
+
+  rows.forEach((row, i) => {
+    if (row.length < 9) return;
+    const tr = document.createElement('tr');
+    if (i === 0) tr.classList.add('now-serving');
+
+    tr.innerHTML = `
+      <td>#${row[8] || (i+1)}</td>
+      <td>${row[3] || ''} ${row[4] || ''}</td>
+      <td>${row[2] || ''}</td>
+      <td>${row[0] || ''} ${row[1] || ''}</td>
+      <td>${row[7] || ''}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+
+  statusDiv.textContent = `Showing ${rows.length} entries (newest first)`;
+} catch (e) {
+  console.error("Fetch failed:", e);
+  statusDiv.textContent = "Error loading queue: " + e.message + ". Check console or submit a test first.";
+  statusDiv.className = "error";
+  tbody.innerHTML = '<tr><td colspan="5" class="no-data">Failed to load data. Try submitting an entry first.</td></tr>';
+}
 
     loadQueue();
     setInterval(loadQueue, 15000);
@@ -73,3 +95,4 @@
 </body>
 
 </html>
+
