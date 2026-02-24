@@ -36,6 +36,13 @@
       <button type="submit">JOIN QUEUE NOW</button>
     </form>
     <div id="message"></div>
+
+    <!-- New button to go to queue page -->
+    <div style="text-align:center; margin-top:30px;">
+      <a href="queue.html" style="display:inline-block; padding:14px 30px; background:#4CAF50; color:white; text-decoration:none; border-radius:6px; font-size:16px; font-weight:bold;">
+        View Live Queue Status →
+      </a>
+    </div>
   </div>
 
   <script>
@@ -58,11 +65,9 @@
         const res = await fetch(SCRIPT_URL, {
           method: 'POST',
           body: formData,
-          mode: 'no-cors'           // This bypasses the CORS block for local testing
+          mode: 'no-cors'  // Keep for local; remove if hosted
         });
 
-        // With no-cors we cannot read the response body, so we assume success
-        // and tell the user to check the Google Sheet
         msg.innerHTML = `✅ Submitted successfully!<br>Check your Google Sheet → QueueLog tab for the new row.<br>(Queue number is in column I)`;
         msg.className = "success";
         document.getElementById('queueForm').reset();
@@ -74,6 +79,4 @@
     });
   </script>
 </body>
-
 </html>
-
