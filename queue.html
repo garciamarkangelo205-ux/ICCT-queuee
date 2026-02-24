@@ -39,79 +39,80 @@
     </table>
   </div>
 
-  <script>
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxlDcNJ9JDyU0C16lra1IZyks9IjPZqlLv0TQopGO9UkXdWdGN6JEdgRlHfOGhXixxn/exec";
+ <script>
+  const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxlDcNJ9JDyU0C16lra1IZyks9IjPZqlLv0TQopGO9UkXdWdGN6JEdgRlHfOGhXixxn/exec";
 
-    const statusDiv = document.getElementById('status');
-    const tbody = document.getElementById('queueBody');
+  const statusDiv = document.getElementById('status');
+  const tbody = document.getElementById('queueBody');
 
-    async function loadQueue() {
-      statusDiv.textContent = "Loading queue data...";
-      statusDiv.className = "";
+  async function loadQueue() {
+    statusDiv.textContent = "Loading queue data...";
+    statusDiv.className = "";
 
-      try {
-        const res = await fetch(SCRIPT_URL + "?action=display");
-        if (!res.ok) {
-          throw new Error(`HTTP error! Status: ${res.status} - ${res.statusText}`);
-        }
-
-        const data = await res.json();
-
-        tbody.innerHTML = "";
-
-        if (data.length <= 1) {
-          tbody.innerHTML = '<tr><td colspan="5" class="no-data">No queue entries yet. Submit a test from the booking page.</td></tr>';
-          statusDiv.textContent = "Queue is empty";
-          return;
-        }
-
-        // Skip header row, filter out completely empty rows
-        let rows = data.slice(1).filter(row => row.some(cell => cell && cell.trim() !== ""));
-
-        if (rows.length === 0) {
-          tbody.innerHTML = '<tr><td colspan="5" class="no-data">No valid entries found (only empty or incomplete rows).</td></tr>';
-          statusDiv.textContent = "No valid data";
-          return;
-        }
-
-        rows.reverse(); // Show newest first
-
-        rows.forEach((row, i) => {
-          const tr = document.createElement('tr');
-          if (i === 0) tr.classList.add('now-serving');
-
-          const queueNum = row[8] || (i + 1);
-          const name = `${row[3] || ''} ${row[4] || ''}`.trim() || '—';
-          const studentID = row[2] || '—';
-          const time = `${row[0] || ''} ${row[1] || ''}`.trim() || '—';
-          const method = row[7] || '—';
-
-          tr.innerHTML = `
-            <td>#${queueNum}</td>
-            <td>${name}</td>
-            <td>${studentID}</td>
-            <td>${time}</td>
-            <td>${method}</td>
-          `;
-          tbody.appendChild(tr);
-        });
-
-        statusDiv.textContent = `Loaded ${rows.length} entries (refreshes every 15s)`;
-
-      } catch (e) {
-        console.error("Queue load failed:", e);
-        statusDiv.textContent = "Error loading queue: " + e.message;
-        statusDiv.className = "error";
-        tbody.innerHTML = '<tr><td colspan="5" class="no-data">Failed to load data. Check console (F12) or submit a test entry.</td></tr>';
+    try {
+      const res = await fetch(SCRIPT_URL + "?action=display");
+      if (!res.ok) {
+        throw new Error(`Server responded with HTTP ${res.status}`);
       }
-    }
 
-    // Run immediately and every 15 seconds
-    loadQueue();
-    setInterval(loadQueue, 15000);
-  </script>
+      const data = await res.json();
+
+      tbody.innerHTML = "";
+
+      if (data.length <= 1) {
+        tbody.innerHTML = '<tr><td colspan="5" class="no-data">No queue entries yet. Submit a test from the booking page.</td></tr>';
+        statusDiv.textContent = "Queue is empty";
+        return;
+      }
+
+      // Skip header row, filter out completely empty/invalid rows
+      let rows = data.slice(1).filter(row => row.length >= 9 && row.some(cell => cell && cell.toString().trim() !== ""));
+
+      if (rows.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" class="no-data">No valid queue entries found</td></tr>';
+        statusDiv.textContent = "No valid data";
+        return;
+      }
+
+      rows.reverse(); // newest entries first
+
+      rows.forEach((row, i) => {
+        const tr = document.createElement('tr');
+        if (i === 0) tr.classList.add('now-serving');
+
+        const queueNum = row[8] || (i + 1);
+        const name = `${row[3] || ''} ${row[4] || ''}`.trim() || '—';
+        const studentID = row[2] || '—';
+        const time = `${row[0] || ''} ${row[1] || ''}`.trim() || '—';
+        const method = row[7] || '—';
+
+        tr.innerHTML = `
+          <td>#${queueNum}</td>
+          <td>${name}</td>
+          <td>${studentID}</td>
+          <td>${time}</td>
+          <td>${method}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+
+      statusDiv.textContent = `Loaded ${rows.length} entries (refreshes every 15s)`;
+
+    } catch (e) {
+      console.error("Queue load failed:", e);
+      statusDiv.textContent = "Error loading queue: " + e.message;
+      statusDiv.className = "error";
+      tbody.innerHTML = '<tr><td colspan="5" class="no-data">Failed to load data. Check console (F12) or submit a test entry first.</td></tr>';
+    }
+  }
+
+  // Initial load + auto-refresh
+  loadQueue();
+  setInterval(loadQueue, 15000);
+</script>
 </body>
 </html>
+
 
 
 
