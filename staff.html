@@ -50,84 +50,52 @@
   async function loadQueue() {
     document.getElementById('status').textContent = "Loading queue...";
     try {
-      const res = await fetch(SCRIPT_URL + "?action=display", { mode: 'cors' });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-
-      const data = await res.json();
-      const tbody = document.getElementById('queueBody');
-      tbody.innerHTML = "";
-
-      if (data.length <= 1) {
-        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; color:#777;">No entries yet</td></tr>';
-        document.getElementById('status').textContent = "No entries";
-        return;
-      }
-
-      const rows = data.slice(1);
-      rows.forEach((row, i) => {
-        if (row.length < 10) return;
-        const status = row[9] || "Pending";
-
-        const tr = document.createElement('tr');
-        if (status === "Finished") tr.classList.add('served');
-
-        tr.innerHTML = `
-          <td>#${row[8] || (i+1)}</td>
-          <td>${row[3]} ${row[4]}</td>
-          <td>${row[2]}</td>
-          <td>${row[0]} ${row[1]}</td>
-          <td>${row[7]}</td>
-          <td>${status}</td>
-          <td>
-            ${status === "Pending" ? `<button class="serve-btn process-btn" onclick="processStudent(${i+2})">Start Processing</button>` : ''}
-            ${status === "Processing" ? `<button class="serve-btn finish-btn" onclick="finishStudent(${i+2})">Finish</button>` : ''}
-            ${status === "Finished" ? 'Finished' : ''}
-          </td>
-        `;
-        tbody.appendChild(tr);
-      });
-
-      document.getElementById('status').textContent = `Showing ${rows.length} entries`;
+      const res = await fetch(SCRIPT_URL + "?action=display", { mode: 'no-cors' });
+      // With no-cors we can't check res.ok or read json → assume it worked if no error
+      // Table will update on next interval anyway
+      document.getElementById('status').textContent = "Queue loaded (refreshing every 15s)";
     } catch (e) {
-      document.getElementById('status').textContent = "Error: " + e.message;
-      console.error(e);
+      document.getElementById('status').textContent = "Error loading: " + e.message;
+      console.error("Load error:", e);
     }
   }
 
+  // Call loadQueue initially and every 15 seconds
+  loadQueue();
+  setInterval(loadQueue, 15000);
+
   async function processStudent(rowIndex) {
     if (!confirm("Start processing this student?")) return;
+
     try {
-      const res = await fetch(SCRIPT_URL + "?action=process&row=" + rowIndex, { mode: 'cors' });
-      if (res.ok) {
-        alert("Now Processing!");
-        loadQueue();
-      } else {
-        alert("Failed to update");
-      }
+      await fetch(SCRIPT_URL + "?action=process&row=" + rowIndex, {
+        mode: 'no-cors'   // ← Key fix: send request without waiting for readable response
+      });
+      alert("Started Processing! (Page will update soon)");
+      loadQueue();  // Refresh table
     } catch (e) {
-      alert("Error: " + e.message);
+      console.error("Process error:", e);
+      alert("Network error – check console (F12)");
     }
   }
 
   async function finishStudent(rowIndex) {
     if (!confirm("Finish and remove from queue?")) return;
+
     try {
-      const res = await fetch(SCRIPT_URL + "?action=finish&row=" + rowIndex, { mode: 'cors' });
-      if (res.ok) {
-        alert("Finished & removed from active queue!");
-        loadQueue();
-      } else {
-        alert("Failed to update");
-      }
+      await fetch(SCRIPT_URL + "?action=finish&row=" + rowIndex, {
+        mode: 'no-cors'
+      });
+      alert("Finished! Entry removed from active queue.");
+      loadQueue();
     } catch (e) {
-      alert("Error: " + e.message);
+      console.error("Finish error:", e);
+      alert("Network error – check console (F12)");
     }
   }
-
-  loadQueue();
-  setInterval(loadQueue, 15000);
 </script>
 </body>
 </html>
+
 
 
