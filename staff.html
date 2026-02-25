@@ -5,160 +5,64 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Staff Queue Control - ICCT Registrar</title>
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #f0f2f5;
-      margin: 0;
-      padding: 15px;
-      line-height: 1.5;
-    }
-    .container {
-      max-width: 1000px;
-      margin: 0 auto;
-      background: white;
-      padding: 20px;
-      border-radius: 12px;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
-      position: relative; /* for logout button positioning */
-    }
-    h1 {
-      text-align: center;
-      color: #d32f2f;
-      font-size: 1.8rem;
-      margin-bottom: 15px;
-    }
-    #status {
-      text-align: center;
-      margin: 15px 0;
-      font-weight: bold;
-      font-size: 1.1rem;
-      color: #555;
-    }
-    .error { color: #d32f2f; }
-    .logout-btn {
-      position: absolute;
-      top: 15px;
-      right: 15px;
-      padding: 10px 18px;
-      background: #dc3545;
-      color: white;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
-      font-weight: bold;
-      font-size: 1rem;
-    }
-    .logout-btn:hover {
-      background: #c82333;
-    }
-    .table-wrapper {
-      overflow-x: auto;
-      margin-top: 15px;
-      -webkit-overflow-scrolling: touch;
-    }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      min-width: 700px;
-    }
-    th, td {
-      padding: 12px 10px;
-      border: 1px solid #ddd;
-      text-align: left;
-      font-size: 0.95rem;
-    }
-    th {
-      background: #d32f2f;
-      color: white;
-      white-space: nowrap;
-    }
-    td {
-      white-space: nowrap;
-    }
-    .served {
-      background: #e0e0e0;
-      text-decoration: line-through;
-      color: #777;
-    }
-    .serve-btn {
-      color: white;
-      border: none;
-      padding: 10px 16px;
-      border-radius: 6px;
-      cursor: pointer;
-      margin-right: 8px;
-      font-weight: bold;
-      font-size: 0.95rem;
-      min-width: 100px;
-    }
-    .process-btn { background: #2196F3; }
-    .finish-btn  { background: #ff9800; }
-
-    /* Mobile adjustments */
-    @media (max-width: 768px) {
-      body { padding: 10px; }
-      .container { padding: 15px; }
-      h1 { font-size: 1.5rem; }
-      th, td { padding: 10px 8px; font-size: 0.9rem; }
-      .serve-btn { padding: 10px 14px; font-size: 0.9rem; min-width: 90px; }
-      .table-wrapper { margin: 10px -15px 0; }
-      .logout-btn {
-        position: static;
-        display: block;
-        margin: 10px auto 20px;
-        width: 80%;
-        text-align: center;
-      }
-    }
-
-    @media (max-width: 480px) {
-      h1 { font-size: 1.3rem; margin-bottom: 10px; }
-      th, td { padding: 8px 6px; font-size: 0.85rem; }
-      .serve-btn { padding: 8px 12px; font-size: 0.85rem; min-width: 80px; }
-    }
+    body { font-family: Arial, sans-serif; background:#f0f2f5; margin:0; padding:20px; }
+    .container { max-width: 1000px; margin:auto; background:white; padding:20px; border-radius:12px; box-shadow:0 4px 20px rgba(0,0,0,0.1); }
+    h1 { text-align:center; color:#d32f2f; }
+    table { width:100%; border-collapse:collapse; margin-top:20px; }
+    th, td { padding:12px; border:1px solid #ddd; text-align:left; }
+    th { background:#d32f2f; color:white; }
+    .served { background:#e0e0e0; text-decoration:line-through; color:#777; }
+    .serve-btn { background:#4CAF50; color:white; border:none; padding:8px 16px; border-radius:4px; cursor:pointer; margin-right:8px; }
+    .process-btn { background:#2196F3; color:white; }
+    .finish-btn { background:#ff9800; color:white; }
+    #status { text-align:center; margin:20px 0; font-weight:bold; font-size:18px; color:#555; }
+    .error { color:#d32f2f; }
   </style>
 </head>
 <body>
   <div class="container">
-    <button class="logout-btn" onclick="logout()">Logout</button>
-
     <h1>🛠️ Registrar Staff Queue Control</h1>
     <p id="status">Loading queue...</p>
-
-    <div class="table-wrapper">
-      <table id="queueTable">
-        <thead>
-          <tr>
-            <th>Queue #</th>
-            <th>Student Name</th>
-            <th>Student ID</th>
-            <th>Time</th>
-            <th>Method</th>
-            <th>Status</th>
-            <th>Action</th>
-          </tr>
-        </thead>
-        <tbody id="queueBody"></tbody>
-      </table>
+    <table id="queueTable">
+      <thead>
+        <tr>
+          <th>Queue #</th>
+          <th>Student Name</th>
+          <th>Student ID</th>
+          <th>Time</th>
+          <th>Method</th>
+          <th>Status</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody id="queueBody"></tbody>
+    </table>
+    <div style="text-align:center; margin-top:30px;">
+      <a href="./" style="color:#1e3a8a; font-weight:bold;">← Back to Booking</a>
     </div>
   </div>
 
 <script>
-  // PASSWORD PROTECTION
-  const STAFF_PASSWORD = "icctstaff2026";
-  const entered = prompt("Enter staff password:");
-  if (entered !== STAFF_PASSWORD) {
-    alert("Wrong password. Access denied.");
-    window.location.href = "./";
-    throw new Error("Access denied");
-  }
-  console.log("Staff logged in");
+  // PASSWORD PROTECTION - CHANGE THIS PASSWORD TO YOUR OWN SECRET ONE
+  const STAFF_PASSWORD = "icctstaff2026"; // ← Change this to something only you/staff know!
 
-  const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzXwlu8CX1Wam1p3LNZewQLUNRIH_STbghhW83XnYABqz0k1MqQvM_uGOdJDcd8BSNuSw/exec";
+  // Ask for password immediately
+  const entered = prompt("Enter staff password to access this page:");
+
+  if (entered !== STAFF_PASSWORD) {
+    alert("Incorrect password. Access denied.");
+    window.location.href = "./"; // Redirect to booking page
+    throw new Error("Access denied - wrong password");
+  }
+
+  // If password correct, continue loading the page
+  console.log("Staff access granted - loading queue control");
+
+  // YOUR SCRIPT URL (keep this as is or update if redeployed)
+  const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzfRtNHDKV_BRxVMVX_sMQtBVBQsgUq4PsAjWwi1YQ_vDZokc3jSfgFzvESg_QaA_Kw9A/exec";
 
   async function loadQueue() {
-    const status = document.getElementById('status');
-    status.textContent = "Loading queue...";
+    document.getElementById('status').textContent = "Loading queue...";
     try {
       const res = await fetch(SCRIPT_URL + "?action=display", { mode: 'cors' });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -166,69 +70,65 @@
       const tbody = document.getElementById('queueBody');
       tbody.innerHTML = "";
       if (data.length <= 1) {
-        tbody.innerHTML = '<tr><td colspan="7">No entries yet</td></tr>';
-        status.textContent = "No entries";
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; color:#777;">No entries yet</td></tr>';
+        document.getElementById('status').textContent = "No entries";
         return;
       }
       const rows = data.slice(1);
       rows.forEach((row, i) => {
         if (row.length < 10) return;
-        const statusVal = row[9] || "Pending";
+        const status = row[9] || "Pending";
         const tr = document.createElement('tr');
-        if (statusVal === "Finished") tr.classList.add('served');
+        if (status === "Finished") tr.classList.add('served');
         tr.innerHTML = `
           <td>#${row[8] || (i+1)}</td>
-          <td>${row[3] || ''} ${row[4] || ''}</td>
-          <td>${row[2] || '—'}</td>
-          <td>${row[0] || ''} ${row[1] || ''}</td>
-          <td>${row[7] || '—'}</td>
-          <td>${statusVal}</td>
+          <td>${row[3]} ${row[4]}</td>
+          <td>${row[2]}</td>
+          <td>${row[0]} ${row[1]}</td>
+          <td>${row[7]}</td>
+          <td>${status}</td>
           <td>
-            ${statusVal === "Pending" ? `<button class="serve-btn process-btn" onclick="processStudent(${i+2})">Start Processing</button>` : ''}
-            ${statusVal === "Processing" ? `<button class="serve-btn finish-btn" onclick="finishStudent(${i+2})">Finish</button>` : ''}
-            ${statusVal === "Finished" ? 'Finished' : ''}
+            ${status === "Pending" ? `<button class="serve-btn process-btn" onclick="processStudent(${i+2})">Start Processing</button>` : ''}
+            ${status === "Processing" ? `<button class="serve-btn finish-btn" onclick="finishStudent(${i+2})">Finish</button>` : ''}
+            ${status === "Finished" ? 'Finished' : ''}
           </td>
         `;
         tbody.appendChild(tr);
       });
-      status.textContent = `Showing ${rows.length} entries`;
+      document.getElementById('status').textContent = `Showing ${rows.length} entries`;
     } catch (e) {
-      console.error("Load error:", e);
-      status.textContent = "Error: " + e.message;
+      document.getElementById('status').textContent = "Error: " + e.message;
+      console.error(e);
     }
   }
 
   async function processStudent(rowIndex) {
-    if (!confirm("Start processing?")) return;
+    if (!confirm("Start processing this student?")) return;
     try {
-      console.log("Sending process for row", rowIndex);
       const res = await fetch(SCRIPT_URL + "?action=process&row=" + rowIndex, { mode: 'cors' });
       if (res.ok) {
-        alert("Processing started!");
+        alert("Now Processing!");
         loadQueue();
       } else {
-        alert("Failed (HTTP " + res.status + ")");
+        alert("Failed to update");
       }
     } catch (e) {
-      alert("Network error: " + e.message);
-      console.error(e);
+      alert("Error: " + e.message);
     }
   }
 
   async function finishStudent(rowIndex) {
-    if (!confirm("Finish now?")) return;
+    if (!confirm("Finish and remove from queue?")) return;
     try {
-      console.log("Sending finish for row", rowIndex);
       const res = await fetch(SCRIPT_URL + "?action=finish&row=" + rowIndex, { mode: 'cors' });
       if (res.ok) {
-        alert("Finished!");
+        alert("Finished & removed from active queue!");
         loadQueue();
       } else {
-        alert("Failed (HTTP " + res.status + ")");
+        alert("Failed to update");
       }
     } catch (e) {
-      alert("Network error: " + e.message);
-      console.error(e);
+      alert("Error: " + e.message);
     }
   }
 
@@ -237,5 +137,3 @@
 </script>
 </body>
 </html>
-
-
