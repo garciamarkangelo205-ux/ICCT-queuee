@@ -5,17 +5,96 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Live Queue - ICCT Registrar Cainta</title>
   <style>
-    body { font-family: Arial, sans-serif; background:#f0f2f5; margin:0; padding:20px; }
-    .container { max-width: 900px; margin:auto; background:white; padding:20px; border-radius:12px; box-shadow:0 4px 20px rgba(0,0,0,0.1); }
-    h1 { text-align:center; color:#1e3a8a; }
-    table { width:100%; border-collapse:collapse; margin-top:20px; }
-    th, td { padding:12px; border:1px solid #ddd; text-align:left; }
-    th { background:#1e3a8a; color:white; }
-    .now-serving { background:#fef3c7; font-weight:bold; }
-    .refresh { text-align:center; margin:10px; color:#666; }
-    #status { text-align:center; margin:20px 0; font-weight:bold; font-size:18px; color:#555; }
+    body {
+      font-family: Arial, sans-serif;
+      background: #f0f2f5;
+      margin: 0;
+      padding: 15px;
+      line-height: 1.5;
+    }
+    .container {
+      max-width: 1000px;
+      margin: 0 auto;
+      background: white;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+    }
+    h1 {
+      text-align: center;
+      color: #1e3a8a;
+      font-size: 1.8rem;
+      margin-bottom: 15px;
+    }
+    .refresh {
+      text-align: center;
+      color: #666;
+      font-size: 0.95rem;
+      margin-bottom: 10px;
+    }
+    #status {
+      text-align: center;
+      margin: 15px 0;
+      font-weight: bold;
+      font-size: 1.1rem;
+      color: #555;
+    }
     .error { color: #991b1b; }
-    .no-data { color: #777; text-align:center; padding:20px; font-style:italic; }
+    .no-data {
+      color: #777;
+      text-align: center;
+      padding: 30px;
+      font-style: italic;
+      font-size: 1rem;
+    }
+    .table-wrapper {
+      overflow-x: auto;
+      margin-top: 15px;
+      -webkit-overflow-scrolling: touch; /* smooth scrolling on iOS */
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 600px; /* forces horizontal scroll on very small screens */
+    }
+    th, td {
+      padding: 12px 10px;
+      border: 1px solid #ddd;
+      text-align: left;
+      font-size: 0.95rem;
+    }
+    th {
+      background: #1e3a8a;
+      color: white;
+      white-space: nowrap;
+    }
+    td {
+      white-space: nowrap;
+    }
+    .now-serving {
+      background: #fef3c7;
+      font-weight: bold;
+    }
+
+    /* Mobile adjustments */
+    @media (max-width: 768px) {
+      body { padding: 10px; }
+      .container { padding: 15px; }
+      h1 { font-size: 1.5rem; }
+      th, td { padding: 10px 8px; font-size: 0.9rem; }
+      .table-wrapper { margin: 10px -15px 0; }
+      .refresh { font-size: 0.9rem; }
+      #status { font-size: 1rem; }
+    }
+
+    @media (max-width: 480px) {
+      h1 { font-size: 1.3rem; margin-bottom: 10px; }
+      th, td { padding: 8px 6px; font-size: 0.85rem; }
+      .btn { /* if you add buttons later */
+        padding: 12px;
+        font-size: 1rem;
+      }
+    }
   </style>
 </head>
 <body>
@@ -23,29 +102,31 @@
     <h1>📊 LIVE QUEUE STATUS - Registrar Office</h1>
     <p class="refresh">Auto-refresh every 15 seconds (newest entries first)</p>
     <div id="status">Loading queue data...</div>
-    <table>
-      <thead>
-        <tr>
-          <th>Queue #</th>
-          <th>Student Name</th>
-          <th>Student ID</th>
-          <th>Time</th>
-          <th>Method</th>
-          <th>Status</th>
-        </tr>
-      </thead>
-      <tbody id="queueBody">
-        <tr><td colspan="6" class="no-data">Waiting for data...</td></tr>
-      </tbody>
-    </table>
+
+    <div class="table-wrapper">
+      <table>
+        <thead>
+          <tr>
+            <th>Queue #</th>
+            <th>Student Name</th>
+            <th>Student ID</th>
+            <th>Time</th>
+            <th>Method</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody id="queueBody">
+          <tr><td colspan="6" class="no-data">Waiting for data...</td></tr>
+        </tbody>
+      </table>
+    </div>
 
     <div style="text-align:center; margin-top:30px;">
-      <a href="./" style="color:#1e3a8a; font-weight:bold;">← Back to Booking</a>
+      <a href="./" style="color:#1e3a8a; font-weight:bold; font-size:1.1rem;">← Back to Booking</a>
     </div>
   </div>
 
 <script>
-  // REPLACE WITH YOUR ACTUAL WEB APP URL
   const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzueR0PYlIrU_OdQ-IG1D0ISzJrAN47z4Fqmg2VYU6DOG4-8j5VjF5RY1BYP6izpz8DIw/exec";
 
   const statusDiv = document.getElementById('status');
@@ -58,19 +139,18 @@
     try {
       const res = await fetch(SCRIPT_URL + "?action=display", { mode: 'cors' });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
-
       const data = await res.json();
 
       tbody.innerHTML = "";
+
       if (data.length <= 1) {
         tbody.innerHTML = '<tr><td colspan="6" class="no-data">No queue entries yet.</td></tr>';
         statusDiv.textContent = "Queue is empty";
         return;
       }
 
-      // Filter out Finished entries
       let rows = data.slice(1).filter(row => {
-        const status = row[9] || "Pending"; // column J = index 9
+        const status = row[9] || "Pending";
         return status !== "Finished";
       });
 
@@ -118,7 +198,3 @@
 </script>
 </body>
 </html>
-
-
-
-
