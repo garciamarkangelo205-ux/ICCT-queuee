@@ -5,26 +5,101 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Staff Queue Control - ICCT Registrar</title>
   <style>
-    body { font-family: Arial, sans-serif; background:#f0f2f5; margin:0; padding:20px; }
-    .container { max-width: 1000px; margin:auto; background:white; padding:20px; border-radius:12px; box-shadow:0 4px 20px rgba(0,0,0,0.1); }
-    h1 { text-align:center; color:#d32f2f; }
-    table { width:100%; border-collapse:collapse; margin-top:20px; }
-    th, td { padding:12px; border:1px solid #ddd; text-align:left; }
-    th { background:#d32f2f; color:white; }
-    .served { background:#e0e0e0; text-decoration:line-through; color:#777; }
-    .serve-btn { color:white; border:none; padding:8px 16px; border-radius:4px; cursor:pointer; margin-right:8px; font-weight:bold; }
-    .process-btn { background:#2196F3; }
-    .finish-btn { background:#ff9800; }
-    #status { text-align:center; margin:20px 0; font-weight:bold; font-size:18px; color:#555; }
-    .error { color:#d32f2f; }
-    .refresh-btn { display:block; margin:15px auto; padding:10px 20px; background:#673ab7; color:white; border:none; border-radius:6px; cursor:pointer; font-size:16px; }
+    body { 
+      font-family: Arial, sans-serif; 
+      background: #f0f2f5; 
+      margin:0; 
+      padding:20px; 
+    }
+    .container { 
+      max-width: 1000px; 
+      margin: auto; 
+      background: white; 
+      padding: 20px; 
+      border-radius: 12px; 
+      box-shadow: 0 4px 20px rgba(0,0,0,0.1); 
+    }
+    h1 { 
+      text-align: center; 
+      color: #d32f2f; 
+    }
+    table { 
+      width: 100%; 
+      border-collapse: collapse; 
+      margin-top: 20px; 
+    }
+    th, td { 
+      padding: 12px; 
+      border: 1px solid #ddd; 
+      text-align: left; 
+    }
+    th { 
+      background: #d32f2f; 
+      color: white; 
+    }
+    .served { 
+      background: #e0e0e0; 
+      text-decoration: line-through; 
+      color: #777; 
+    }
+    .serve-btn { 
+      color: white; 
+      border: none; 
+      padding: 8px 16px; 
+      border-radius: 4px; 
+      cursor: pointer; 
+      margin-right: 8px; 
+      font-weight: bold; 
+    }
+    .process-btn { background: #2196F3; }
+    .finish-btn  { background: #ff9800; }
+    #status { 
+      text-align: center; 
+      margin: 20px 0; 
+      font-weight: bold; 
+      font-size: 18px; 
+      color: #555; 
+    }
+    .error { color: #d32f2f; }
+    .refresh-btn { 
+      display: block; 
+      margin: 15px auto; 
+      padding: 10px 20px; 
+      background: #673ab7; 
+      color: white; 
+      border: none; 
+      border-radius: 6px; 
+      cursor: pointer; 
+      font-size: 16px; 
+    }
+    .info-box {
+      background: #fff3cd;
+      border: 1px solid #ffeeba;
+      border-radius: 8px;
+      padding: 15px;
+      margin: 20px 0;
+      text-align: center;
+      color: #856404;
+      font-size: 16px;
+    }
   </style>
 </head>
 <body>
   <div class="container">
     <h1>🛠️ Registrar Staff Queue Control</h1>
-    <p id="status">Loading queue...</p>
-    <button class="refresh-btn" onclick="loadQueue()">Refresh Now</button>
+
+    <div class="info-box">
+      <strong>Important Notice:</strong><br>
+      The table cannot automatically show student rows due to browser security restrictions (Google Apps Script does not support full CORS).<br><br>
+      <strong>How to use:</strong><br>
+      • Click buttons to update status<br>
+      • Check updates on the <strong>Live Queue Status</strong> page or directly in the <strong>Google Sheet</strong> (column J = Status)<br>
+      • Buttons are working – status changes will appear there.
+    </div>
+
+    <p id="status">Waiting for action...</p>
+
+    <button class="refresh-btn" onclick="loadQueue()">Refresh Page</button>
 
     <table id="queueTable">
       <thead>
@@ -39,80 +114,71 @@
         </tr>
       </thead>
       <tbody id="queueBody">
-        <tr><td colspan="7" style="text-align:center; color:#777;">Loading data... (refresh if stuck)</td></tr>
+        <tr>
+          <td colspan="7" style="text-align:center; color:#777; padding:30px;">
+            Table cannot auto-load rows due to browser restrictions.<br><br>
+            Use Live Queue page or Google Sheet to see current queue.<br>
+            Click buttons below to manage students.
+          </td>
+        </tr>
       </tbody>
     </table>
 
-    <div style="text-align:center; margin-top:30px;">
-      <a href="./" style="color:#1e3a8a; font-weight:bold;">← Back to Booking</a>
+    <div style="text-align:center; margin-top:40px;">
+      <a href="./" style="color:#1e3a8a; font-weight:bold; font-size:18px;">← Back to Booking</a>
     </div>
   </div>
 
 <script>
+  // Your confirmed working URL — do NOT change unless you redeploy
   const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzfRtNHDKV_BRxVMVX_sMQtBVBQsgUq4PsAjWwi1YQ_vDZokc3jSfgFzvESg_QaA_Kw9A/exec";
 
   const statusDiv = document.getElementById('status');
-  const tbody = document.getElementById('queueBody');
 
   async function loadQueue() {
-    statusDiv.textContent = "Loading queue data...";
+    statusDiv.textContent = "Refreshing... (check sheet for changes)";
     statusDiv.className = "";
-
-    try {
-      console.log("[DEBUG] Starting fetch to:", SCRIPT_URL + "?action=display");
-
-      const res = await fetch(SCRIPT_URL + "?action=display", {
-        mode: 'no-cors',
-        cache: 'no-cache'
-      });
-
-      console.log("[DEBUG] Fetch completed (no-cors mode - cannot read response body)");
-
-      // We cannot read data here, so we show a message
-      statusDiv.textContent = "Data fetch sent – but cannot display automatically due to browser security (no-cors mode). Check Google Sheet or live queue page.";
-      statusDiv.className = "";
-
-      // Optional: clear table or show placeholder
-      tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; color:#777;">Data sent, but table cannot load in no-cors mode. See sheet for status.</td></tr>';
-
-    } catch (e) {
-      console.error("[ERROR] Fetch failed completely:", e);
-      statusDiv.textContent = "Network error: " + e.message;
-      statusDiv.className = "error";
-      tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; color:#777;">Failed to connect – check console (F12)</td></tr>';
-    }
+    console.log("[Staff] Manual refresh clicked");
   }
-
-  // Start loading
-  loadQueue();
-  setInterval(loadQueue, 15000);
 
   async function processStudent(rowIndex) {
     if (!confirm("Start processing this student?")) return;
+
     try {
-      console.log("[DEBUG] Sending process request for row:", rowIndex);
-      await fetch(SCRIPT_URL + "?action=process&row=" + rowIndex, { mode: 'no-cors' });
-      alert("Processing request sent! Check Google Sheet column J or live queue page.");
-      loadQueue();
+      console.log("[Staff] Sending START PROCESSING for row:", rowIndex);
+      await fetch(SCRIPT_URL + "?action=process&row=" + rowIndex, {
+        mode: 'no-cors',
+        cache: 'no-cache'
+      });
+      console.log("[Staff] START PROCESSING request sent");
+      alert("Processing started! Check Google Sheet column J or Live Queue page.");
+      statusDiv.textContent = "Processing request sent – status updating...";
     } catch (e) {
-      console.error("[ERROR] Process request failed:", e);
-      alert("Error sending request – see console (F12)");
+      console.error("[Staff] START PROCESSING failed:", e);
+      alert("Network issue – open F12 → Console and check red messages");
     }
   }
 
   async function finishStudent(rowIndex) {
-    if (!confirm("Finish and remove from queue?")) return;
+    if (!confirm("Finish and remove this student from queue?")) return;
+
     try {
-      console.log("[DEBUG] Sending finish request for row:", rowIndex);
-      await fetch(SCRIPT_URL + "?action=finish&row=" + rowIndex, { mode: 'no-cors' });
-      alert("Finish request sent! Check Google Sheet.");
-      loadQueue();
+      console.log("[Staff] Sending FINISH for row:", rowIndex);
+      await fetch(SCRIPT_URL + "?action=finish&row=" + rowIndex, {
+        mode: 'no-cors',
+        cache: 'no-cache'
+      });
+      console.log("[Staff] FINISH request sent");
+      alert("Finished! Entry should now be marked as Finished.");
+      statusDiv.textContent = "Finish request sent – check Live Queue / Sheet";
     } catch (e) {
-      console.error("[ERROR] Finish request failed:", e);
-      alert("Error – see console (F12)");
+      console.error("[Staff] FINISH failed:", e);
+      alert("Network issue – see console (F12)");
     }
   }
+
+  // Optional: auto-log when page loads
+  console.log("[Staff Page Loaded] SCRIPT_URL:", SCRIPT_URL);
 </script>
 </body>
 </html>
-
