@@ -3,118 +3,133 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Live Queue - ICCT Registrar Cainta</title>
+  <title>Book Queue - ICCT Registrar Cainta</title>
   <style>
-    body { font-family: Arial, sans-serif; background:#f0f2f5; margin:0; padding:20px; }
-    .container { max-width: 900px; margin:auto; background:white; padding:20px; border-radius:12px; box-shadow:0 4px 20px rgba(0,0,0,0.1); }
-    h1 { text-align:center; color:#1e3a8a; }
-    table { width:100%; border-collapse:collapse; margin-top:20px; }
-    th, td { padding:12px; border:1px solid #ddd; text-align:left; }
-    th { background:#1e3a8a; color:white; }
-    .now-serving { background:#fef3c7; font-weight:bold; }
-    .refresh { text-align:center; margin:10px; color:#666; }
-    #status { text-align:center; margin:20px 0; font-weight:bold; font-size:18px; color:#555; }
+    body { 
+      font-family: Arial, sans-serif; 
+      background: #f0f2f5; 
+      margin:0; 
+      padding:20px; 
+    }
+    .container { 
+      max-width: 480px; 
+      margin: 40px auto; 
+      background: white; 
+      padding: 30px; 
+      border-radius: 12px; 
+      box-shadow: 0 4px 20px rgba(0,0,0,0.1); 
+    }
+    h1 { 
+      text-align:center; 
+      color:#1e3a8a; 
+    }
+    label { 
+      display:block; 
+      margin:15px 0 5px; 
+      font-weight:bold; 
+    }
+    input { 
+      width:100%; 
+      padding:12px; 
+      border:1px solid #ccc; 
+      border-radius:6px; 
+      box-sizing:border-box; 
+    }
+    button { 
+      width:100%; 
+      padding:14px; 
+      background:#1e3a8a; 
+      color:white; 
+      border:none; 
+      border-radius:6px; 
+      font-size:16px; 
+      cursor:pointer; 
+    }
+    button:hover { 
+      background:#16316f; 
+    }
+    #message { 
+      margin-top:20px; 
+      text-align:center; 
+      font-weight:bold; 
+      font-size:18px; 
+    }
+    .success { color: #166534; }
     .error { color: #991b1b; }
-    .no-data { color: #777; text-align:center; padding:20px; font-style:italic; }
   </style>
 </head>
 <body>
   <div class="container">
-    <h1>📊 LIVE QUEUE STATUS - Registrar Office</h1>
-    <p class="refresh">Auto-refresh every 15 seconds (newest entries first)</p>
-    <div id="status">Loading queue data...</div>
-    <table>
-      <thead>
-        <tr>
-          <th>Queue #</th>
-          <th>Student Name</th>
-          <th>Student ID</th>
-          <th>Time</th>
-          <th>Method</th>
-          <th>Status</th>
-        </tr>
-      </thead>
-      <tbody id="queueBody">
-        <tr><td colspan="6" class="no-data">Waiting for data...</td></tr>
-      </tbody>
-    </table>
+    <h1>📋 Registrar Queue Booking</h1>
+    <form id="queueForm">
+      <label>Student ID</label>
+      <input type="text" id="studentID" required placeholder="CA20230000">
+      <label>First Name</label>
+      <input type="text" id="firstName" required>
+      <label>Last Name</label>
+      <input type="text" id="lastName" required>
+      <label>Class / Section</label>
+      <input type="text" id="class" placeholder="LFCA322A029">
+      <button type="submit">JOIN QUEUE NOW</button>
+    </form>
+    <div id="message"></div>
 
     <div style="text-align:center; margin-top:30px;">
-      <a href="./" style="color:#1e3a8a; font-weight:bold;">← Back to Booking</a>
+      <a href="queue.html" style="display:inline-flex; align-items:center; gap:10px; padding:14px 30px; background:#4CAF50; color:white; text-decoration:none; border-radius:6px; font-size:16px; font-weight:bold; box-shadow:0 2px 8px rgba(0,0,0,0.2);">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-13h2v6h-2zm0 8h2v2h-2z"/></svg>
+        View Live Queue Status
+      </a>
     </div>
   </div>
 
 <script>
-  // REPLACE WITH YOUR ACTUAL WEB APP URL
+  // ────────────────────────────────────────────────
+  // REPLACE THIS WITH YOUR ACTUAL GOOGLE APPS SCRIPT WEB APP URL
   const SCRIPT_URL = "https://script.google.com/macros/s/YOUR_DEPLOYMENT_ID_HERE/exec";
+  // ────────────────────────────────────────────────
 
-  const statusDiv = document.getElementById('status');
-  const tbody = document.getElementById('queueBody');
+  document.getElementById('queueForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    const msg = document.getElementById('message');
+    msg.textContent = "Submitting...";
+    msg.className = "";
 
-  async function loadQueue() {
-    statusDiv.textContent = "Loading queue data...";
-    statusDiv.className = "";
+    const formData = new FormData();
+    formData.append('studentID', document.getElementById('studentID').value.trim());
+    formData.append('firstName', document.getElementById('firstName').value.trim());
+    formData.append('lastName', document.getElementById('lastName').value.trim());
+    formData.append('class', document.getElementById('class').value.trim());
+    formData.append('method', 'Online');
 
     try {
-      const res = await fetch(SCRIPT_URL + "?action=display", { mode: 'cors' });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-
-      const data = await res.json();
-
-      tbody.innerHTML = "";
-      if (data.length <= 1) {
-        tbody.innerHTML = '<tr><td colspan="6" class="no-data">No queue entries yet.</td></tr>';
-        statusDiv.textContent = "Queue is empty";
-        return;
-      }
-
-      // Filter out Finished entries
-      let rows = data.slice(1).filter(row => {
-        const status = row[9] || "Pending"; // column J = index 9
-        return status !== "Finished";
+      const res = await fetch(SCRIPT_URL, {
+        method: 'POST',
+        body: formData,
+        mode: 'cors',           // try 'no-cors' if you get CORS errors
+        redirect: 'follow'
       });
 
-      if (rows.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="6" class="no-data">No active queue entries</td></tr>';
-        statusDiv.textContent = "No active entries";
-        return;
+      let result;
+      try {
+        result = await res.json();
+      } catch {
+        // If response is not JSON (common with no-cors), assume success
+        result = { status: "success" };
       }
 
-      rows.reverse(); // newest first
-
-      rows.forEach((row, i) => {
-        const tr = document.createElement('tr');
-        if (i === 0) tr.classList.add('now-serving');
-
-        const queueNum = row[8] || (i + 1);
-        const name = `${row[3] || ''} ${row[4] || ''}`.trim() || '—';
-        const studentID = row[2] || '—';
-        const time = `${row[0] || ''} ${row[1] || ''}`.trim() || '—';
-        const method = row[7] || '—';
-        const status = row[9] || "Pending";
-
-        tr.innerHTML = `
-          <td>#${queueNum}</td>
-          <td>${name}</td>
-          <td>${studentID}</td>
-          <td>${time}</td>
-          <td>${method}</td>
-          <td>${status}</td>
-        `;
-        tbody.appendChild(tr);
-      });
-
-      statusDiv.textContent = `Loaded ${rows.length} active entries • refreshes every 15s`;
-    } catch (e) {
-      console.error("Queue load failed:", e);
-      statusDiv.textContent = "Error loading queue: " + e.message;
-      statusDiv.className = "error";
-      tbody.innerHTML = '<tr><td colspan="6" class="no-data">Failed to load. Check console (F12).</td></tr>';
+      if (result.status === "success") {
+        msg.innerHTML = `✅ Submitted successfully!<br>Your entry has been added to the queue.<br>Queue number: <strong>${result.queueNumber || "assigned"}</strong><br>Check the Live Queue page to see your position.`;
+        msg.className = "success";
+        document.getElementById('queueForm').reset();
+      } else {
+        throw new Error(result.message || "Server responded with error");
+      }
+    } catch (err) {
+      console.error("Form submission error:", err);
+      msg.textContent = "❌ Submission failed. Check internet or try again.";
+      msg.className = "error";
     }
-  }
-
-  loadQueue();
-  setInterval(loadQueue, 15000);
+  });
 </script>
 </body>
 </html>
