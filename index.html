@@ -46,7 +46,7 @@
     </div>
   </div>
 
- <script>
+<script>
   const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxlDcNJ9JDyU0C16lra1IZyks9IjPZqlLv0TQopGO9UkXdWdGN6JEdgRlHfOGhXixxn/exec";
 
   document.getElementById('queueForm').addEventListener('submit', async function(e) {
@@ -68,17 +68,15 @@
         body: formData
       });
 
-      // Try to read response if possible (hosted pages should allow it)
       let result;
       try {
         result = await res.json();
-      } catch (jsonErr) {
-        // If JSON parse fails (e.g., empty response), assume success
-        result = { status: "success" };
+      } catch {
+        result = { status: "success" }; // assume success if JSON can't be read
       }
 
       if (result.status === "success") {
-        msg.innerHTML = `✅ Submitted successfully!<br>Your entry has been added to the queue.<br>Queue number: <strong>${result.queueNumber || "assigned in sheet"}</strong><br>Check the Live Queue page.`;
+        msg.innerHTML = `✅ Submitted successfully!<br>Your entry has been added to the queue.<br>Queue number: <strong>${result.queueNumber || "assigned in sheet"}</strong><br>Check the Live Queue page to see your position.`;
         msg.className = "success";
         document.getElementById('queueForm').reset();
       } else {
@@ -93,6 +91,7 @@
 </script>
 </body>
 </html>
+
 
 
 
