@@ -12,8 +12,9 @@
     th, td { padding:12px; border:1px solid #ddd; text-align:left; }
     th { background:#d32f2f; color:white; }
     .served { background:#e0e0e0; text-decoration:line-through; color:#777; }
-    .serve-btn { background:#4CAF50; color:white; border:none; padding:8px 16px; border-radius:4px; cursor:pointer; }
-    .serve-btn:hover { background:#388e3c; }
+    .serve-btn { background:#4CAF50; color:white; border:none; padding:8px 16px; border-radius:4px; cursor:pointer; margin-right:8px; }
+    .process-btn { background:#2196F3; color:white; }
+    .finish-btn { background:#ff9800; color:white; }
     #status { text-align:center; margin:20px 0; font-weight:bold; font-size:18px; color:#555; }
     .error { color:#d32f2f; }
   </style>
@@ -30,6 +31,7 @@
           <th>Student ID</th>
           <th>Time</th>
           <th>Method</th>
+          <th>Status</th>
           <th>Action</th>
         </tr>
       </thead>
@@ -42,8 +44,8 @@
   </div>
 
 <script>
-  // ←←← REPLACE THIS URL WITH YOUR LATEST WEB APP URL ←←←
-  const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzTWQhRIcNBpDl8rGM1RU8yxiCISq3YxEakUBylQ6-Q05FsNhFOctN_1bL-pZDLBqHSVw/exec";
+  // REPLACE WITH YOUR ACTUAL WEB APP URL
+  const SCRIPT_URL = "https://script.google.com/macros/s/YOUR_DEPLOYMENT_ID_HERE/exec";
 
   async function loadQueue() {
     document.getElementById('status').textContent = "Loading queue...";
@@ -56,7 +58,7 @@
       tbody.innerHTML = "";
 
       if (data.length <= 1) {
-        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:#777;">No entries yet</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; color:#777;">No entries yet</td></tr>';
         document.getElementById('status').textContent = "No entries";
         return;
       }
@@ -65,8 +67,9 @@
       rows.forEach((row, i) => {
         if (row.length < 10) return;
         const status = row[9] || "Pending";
+
         const tr = document.createElement('tr');
-        if (status === "Served") tr.classList.add('served');
+        if (status === "Finished") tr.classList.add('served');
 
         tr.innerHTML = `
           <td>#${row[8] || (i+1)}</td>
@@ -74,8 +77,11 @@
           <td>${row[2]}</td>
           <td>${row[0]} ${row[1]}</td>
           <td>${row[7]}</td>
+          <td>${status}</td>
           <td>
-            ${status !== "Served" ? `<button class="serve-btn" onclick="serveStudent(${i+2})">Serve / Finish</button>` : 'Served'}
+            ${status === "Pending" ? `<button class="serve-btn process-btn" onclick="processStudent(${i+2})">Start Processing</button>` : ''}
+            ${status === "Processing" ? `<button class="serve-btn finish-btn" onclick="finishStudent(${i+2})">Finish</button>` : ''}
+            ${status === "Finished" ? 'Finished' : ''}
           </td>
         `;
         tbody.appendChild(tr);
@@ -88,18 +94,30 @@
     }
   }
 
-  async function serveStudent(rowIndex) {
-    if (!confirm("Mark this student as Served?")) return;
+  async function processStudent(rowIndex) {
+    if (!confirm("Start processing this student?")) return;
     try {
-      const res = await fetch(SCRIPT_URL + "?action=serve&row=" + rowIndex, {
-        method: 'POST',
-        mode: 'cors'
-      });
+      const res = await fetch(SCRIPT_URL + "?action=process&row=" + rowIndex, { mode: 'cors' });
       if (res.ok) {
-        alert("Student marked as Served!");
+        alert("Now Processing!");
         loadQueue();
       } else {
-        alert("Failed to update status");
+        alert("Failed to update");
+      }
+    } catch (e) {
+      alert("Error: " + e.message);
+    }
+  }
+
+  async function finishStudent(rowIndex) {
+    if (!confirm("Finish and remove from queue?")) return;
+    try {
+      const res = await fetch(SCRIPT_URL + "?action=finish&row=" + rowIndex, { mode: 'cors' });
+      if (res.ok) {
+        alert("Finished & removed from active queue!");
+        loadQueue();
+      } else {
+        alert("Failed to update");
       }
     } catch (e) {
       alert("Error: " + e.message);
@@ -111,4 +129,3 @@
 </script>
 </body>
 </html>
-
