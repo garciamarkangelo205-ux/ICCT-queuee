@@ -75,36 +75,76 @@
   }
 
   // Initial + auto refresh
-  loadQueue();
-  setInterval(loadQueue, 15000);
+  async function loadQueue() {
+  const statusEl = document.getElementById('status');
+  statusEl.textContent = "Loading queue data...";
+  statusEl.className = "";
 
-  async function processStudent(rowIndex) {
-    if (!confirm("Start processing?")) return;
-    try {
-      console.log("[DEBUG] Process row " + rowIndex);
-      await fetch(SCRIPT_URL + "?action=process&row=" + rowIndex, { mode: 'no-cors' });
-      alert("Request sent – status should update soon (refresh or check sheet)");
-      loadQueue();
-    } catch (e) {
-      console.error(e);
-      alert("Error – see console");
-    }
-  }
+  try {
+    console.log("[DEBUG] Fetching queue with cors mode:", SCRIPT_URL + "?action=display");
+    
+    const res = await fetch(SCRIPT_URL + "?action=display", {
+      mode: 'cors',
+      cache: 'no-cache',
+      credentials: 'omit'   // helps avoid auth cookie issues
+    });
 
-  async function finishStudent(rowIndex) {
-    if (!confirm("Finish now?")) return;
-    try {
-      console.log("[DEBUG] Finish row " + rowIndex);
-      await fetch(SCRIPT_URL + "?action=finish&row=" + rowIndex, { mode: 'no-cors' });
-      alert("Request sent – entry should be finished");
-      loadQueue();
-    } catch (e) {
-      console.error(e);
-      alert("Error – see console");
+    console.log("[DEBUG] Response status:", res.status);
+
+    if (!res.ok) {
+      throw new Error(`Server returned ${res.status}`);
     }
+
+    const data = await res.json();
+    console.log("[DEBUG] Received data:", data);
+
+    const tbody = document.getElementById('queueBody');
+    tbody.innerHTML = "";
+
+    if (data.length <= 1) {
+      tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; color:#777;">No entries yet</td></tr>';
+      statusEl.textContent = "No entries in queue";
+      return;
+    }
+
+    // Process rows (skip header row 0)
+    const rows = data.slice(1);
+    rows.forEach((row, i) => {
+      if (row.length < 10) return;
+
+      const status = row[9] || "Pending"; // column J = index 9
+
+      const tr = document.createElement('tr');
+      if (status === "Finished") tr.classList.add('served');
+
+      tr.innerHTML = `
+        <td>#${row[8] || (i+1)}</td>
+        <td>${row[3] || ''} ${row[4] || ''}</td>
+        <td>${row[2] || '—'}</td>
+        <td>${row[0] || ''} ${row[1] || ''}</td>
+        <td>${row[7] || '—'}</td>
+        <td>${status}</td>
+        <td>
+          ${status === "Pending" ? `<button class="serve-btn process-btn" onclick="processStudent(${i+2})">Start Processing</button>` : ''}
+          ${status === "Processing" ? `<button class="serve-btn finish-btn" onclick="finishStudent(${i+2})">Finish</button>` : ''}
+          ${status === "Finished" ? 'Finished' : ''}
+        </td>
+      `;
+      tbody.appendChild(tr);
+    });
+
+    statusEl.textContent = `Loaded ${rows.length} entries • auto-refresh every 15s`;
+
+  } catch (e) {
+    console.error("[ERROR] Queue load failed:", e);
+    statusEl.textContent = "Failed to load queue: " + e.message;
+    statusEl.className = "error";
+    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; color:#777;">Failed to load – see console (F12)</td></tr>';
   }
+}
 </script>
 </body>
 </html>
+
 
 
