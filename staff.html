@@ -43,25 +43,23 @@
   </div>
 
 <script>
-  // ────────────────────────────────────────────────
-  // Simple password protection – change this password!
-  const STAFF_PASSWORD = "icctregistrar2026"; // ← Change to your own secret password
+  // PASSWORD PROTECTION - CHANGE THIS PASSWORD TO YOUR OWN SECRET ONE
+  const STAFF_PASSWORD = "icctstaff2026"; // ← Change this to something only you/staff know!
 
-  const enteredPassword = prompt("Enter staff password:");
+  // Ask for password immediately
+  const entered = prompt("Enter staff password to access this page:");
 
-  if (enteredPassword !== STAFF_PASSWORD) {
+  if (entered !== STAFF_PASSWORD) {
     alert("Incorrect password. Access denied.");
-    window.location.href = "./"; // redirect to booking page
-    // Stop script execution
-    throw new Error("Authentication failed");
+    window.location.href = "./"; // Redirect to booking page
+    throw new Error("Access denied - wrong password");
   }
 
-  // If password is correct → continue loading the page
-  console.log("Staff authenticated – loading queue control");
+  // If password correct, continue loading the page
+  console.log("Staff access granted - loading queue control");
 
-  // ────────────────────────────────────────────────
-  // Your actual web app URL (replace if you redeployed)
-  const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzueR0PYlIrU_OdQ-IG1D0ISzJrAN47z4Fqmg2VYU6DOG4-8j5VjF5RY1BYP6izpz8DIw/exec";
+  // YOUR SCRIPT URL (keep this as is or update if redeployed)
+  const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzfRtNHDKV_BRxVMVX_sMQtBVBQsgUq4PsAjWwi1YQ_vDZokc3jSfgFzvESg_QaA_Kw9A/exec";
 
   async function loadQueue() {
     document.getElementById('status').textContent = "Loading queue...";
@@ -139,4 +137,3 @@
 </script>
 </body>
 </html>
-
