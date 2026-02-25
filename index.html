@@ -23,21 +23,16 @@
     <form id="queueForm">
       <label>Student ID</label>
       <input type="text" id="studentID" required placeholder="CA20230000">
-
       <label>First Name</label>
       <input type="text" id="firstName" required>
-
       <label>Last Name</label>
       <input type="text" id="lastName" required>
-
       <label>Class / Section</label>
       <input type="text" id="class" placeholder="LFCA322A029">
-
       <button type="submit">JOIN QUEUE NOW</button>
     </form>
     <div id="message"></div>
 
-    <!-- View Live Queue Button with icon (Option 2) -->
     <div style="text-align:center; margin-top:30px;">
       <a href="queue.html" style="display:inline-flex; align-items:center; gap:10px; padding:14px 30px; background:#4CAF50; color:white; text-decoration:none; border-radius:6px; font-size:16px; font-weight:bold; box-shadow:0 2px 8px rgba(0,0,0,0.2);">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-13h2v6h-2zm0 8h2v2h-2z"/></svg>
@@ -47,7 +42,8 @@
   </div>
 
 <script>
-  const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxCci-2Yql8JxqZ5ghxPRq312Jz-HTZzz1PNIvPebrBKm55SfKSnchh7dSs1zKJUWw4fQ/exec";
+  // ←←← REPLACE THIS URL WITH YOUR LATEST WEB APP URL AFTER RE-DEPLOY ←←←
+  const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxp6FQq80ISmcbuLT0uAuMGuBd8LGMCrGPrKCM4A-QWSCbYyuz7UnJByCoNe_VLCFd0bg/exec";
 
   document.getElementById('queueForm').addEventListener('submit', async function(e) {
     e.preventDefault();
@@ -65,41 +61,31 @@
     try {
       const res = await fetch(SCRIPT_URL, {
         method: 'POST',
-        body: formData
+        body: formData,
+        mode: 'cors',
+        redirect: 'follow'
       });
 
       let result;
       try {
         result = await res.json();
       } catch {
-        result = { status: "success" }; // assume success if JSON can't be read
+        throw new Error("Invalid response from server (not JSON)");
       }
 
       if (result.status === "success") {
-        msg.innerHTML = `✅ Submitted successfully!<br>Your entry has been added to the queue.<br>Queue number: <strong>${result.queueNumber || "assigned in sheet"}</strong><br>Check the Live Queue page to see your position.`;
+        msg.innerHTML = `✅ Submitted successfully!<br>Your entry has been added.<br>Queue number: <strong>${result.queueNumber || "assigned"}</strong><br>Check the Live Queue page.`;
         msg.className = "success";
         document.getElementById('queueForm').reset();
       } else {
-        throw new Error("Server responded with error");
+        throw new Error(result.message || result.error || "Server rejected the request");
       }
     } catch (err) {
-      msg.textContent = "❌ Submission failed. Check internet or try again.";
+      console.error("Submission error:", err);
+      msg.textContent = "❌ " + (err.message || "Submission failed. Check internet or try again later.");
       msg.className = "error";
-      console.error("Form submission error:", err);
     }
   });
 </script>
 </body>
 </html>
-
-
-
-
-
-
-
-
-
-
-
-
