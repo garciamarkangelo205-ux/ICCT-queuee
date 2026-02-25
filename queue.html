@@ -31,10 +31,11 @@
           <th>Student ID</th>
           <th>Time</th>
           <th>Method</th>
+          <th>Status</th>
         </tr>
       </thead>
       <tbody id="queueBody">
-        <tr><td colspan="5" class="no-data">Waiting for data...</td></tr>
+        <tr><td colspan="6" class="no-data">Waiting for data...</td></tr>
       </tbody>
     </table>
 
@@ -44,8 +45,8 @@
   </div>
 
 <script>
-  // ←←← REPLACE THIS URL WITH YOUR LATEST WEB APP URL ←←←
-  const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzTWQhRIcNBpDl8rGM1RU8yxiCISq3YxEakUBylQ6-Q05FsNhFOctN_1bL-pZDLBqHSVw/exec";
+  // REPLACE WITH YOUR ACTUAL WEB APP URL
+  const SCRIPT_URL = "https://script.google.com/macros/s/YOUR_DEPLOYMENT_ID_HERE/exec";
 
   const statusDiv = document.getElementById('status');
   const tbody = document.getElementById('queueBody');
@@ -62,15 +63,20 @@
 
       tbody.innerHTML = "";
       if (data.length <= 1) {
-        tbody.innerHTML = '<tr><td colspan="5" class="no-data">No queue entries yet.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="6" class="no-data">No queue entries yet.</td></tr>';
         statusDiv.textContent = "Queue is empty";
         return;
       }
 
-      let rows = data.slice(1).filter(row => row.length >= 9 && row.some(cell => cell?.toString().trim()));
+      // Filter out Finished entries
+      let rows = data.slice(1).filter(row => {
+        const status = row[9] || "Pending"; // column J = index 9
+        return status !== "Finished";
+      });
+
       if (rows.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="5" class="no-data">No valid entries found</td></tr>';
-        statusDiv.textContent = "No valid data";
+        tbody.innerHTML = '<tr><td colspan="6" class="no-data">No active queue entries</td></tr>';
+        statusDiv.textContent = "No active entries";
         return;
       }
 
@@ -85,6 +91,7 @@
         const studentID = row[2] || '—';
         const time = `${row[0] || ''} ${row[1] || ''}`.trim() || '—';
         const method = row[7] || '—';
+        const status = row[9] || "Pending";
 
         tr.innerHTML = `
           <td>#${queueNum}</td>
@@ -92,16 +99,17 @@
           <td>${studentID}</td>
           <td>${time}</td>
           <td>${method}</td>
+          <td>${status}</td>
         `;
         tbody.appendChild(tr);
       });
 
-      statusDiv.textContent = `Loaded ${rows.length} entries • refreshes every 15s`;
+      statusDiv.textContent = `Loaded ${rows.length} active entries • refreshes every 15s`;
     } catch (e) {
       console.error("Queue load failed:", e);
       statusDiv.textContent = "Error loading queue: " + e.message;
       statusDiv.className = "error";
-      tbody.innerHTML = '<tr><td colspan="5" class="no-data">Failed to load. Check console (F12).</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="6" class="no-data">Failed to load. Check console (F12).</td></tr>';
     }
   }
 
@@ -110,5 +118,3 @@
 </script>
 </body>
 </html>
-
-
