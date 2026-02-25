@@ -12,37 +12,18 @@
     th, td { padding:12px; border:1px solid #ddd; text-align:left; }
     th { background:#d32f2f; color:white; }
     .served { background:#e0e0e0; text-decoration:line-through; color:#777; }
-    .serve-btn { 
-      color:white; 
-      border:none; 
-      padding:8px 16px; 
-      border-radius:4px; 
-      cursor:pointer; 
-      margin-right:8px; 
-      font-weight:bold;
-    }
+    .serve-btn { color:white; border:none; padding:8px 16px; border-radius:4px; cursor:pointer; margin-right:8px; font-weight:bold; }
     .process-btn { background:#2196F3; }
-    .finish-btn  { background:#ff9800; }
+    .finish-btn { background:#ff9800; }
     #status { text-align:center; margin:20px 0; font-weight:bold; font-size:18px; color:#555; }
     .error { color:#d32f2f; }
-    .refresh-btn {
-      display:block;
-      margin:15px auto;
-      padding:10px 20px;
-      background:#673ab7;
-      color:white;
-      border:none;
-      border-radius:6px;
-      cursor:pointer;
-      font-size:16px;
-    }
+    .refresh-btn { display:block; margin:15px auto; padding:10px 20px; background:#673ab7; color:white; border:none; border-radius:6px; cursor:pointer; font-size:16px; }
   </style>
 </head>
 <body>
   <div class="container">
     <h1>🛠️ Registrar Staff Queue Control</h1>
     <p id="status">Loading queue...</p>
-    
     <button class="refresh-btn" onclick="loadQueue()">Refresh Now</button>
 
     <table id="queueTable">
@@ -57,7 +38,9 @@
           <th>Action</th>
         </tr>
       </thead>
-      <tbody id="queueBody"></tbody>
+      <tbody id="queueBody">
+        <tr><td colspan="7" style="text-align:center; color:#777;">Loading...</td></tr>
+      </tbody>
     </table>
 
     <div style="text-align:center; margin-top:30px;">
@@ -66,73 +49,60 @@
   </div>
 
 <script>
-  // ────────────────────────────────────────────────
-  // YOUR ACTUAL SCRIPT URL – make sure this is correct!
-  const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzfRtNHDKV_BRxVMVX_sMQtBVBQsgUq4PsAjWwi1YQ_vDZokc3jSfgFzvESg_QaA_Kw9A/exec";
-  // ────────────────────────────────────────────────
+  // Use THE SAME URL as in queue.html (copy it from there if different)
+  const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzfRtNHDKV_BRxVMVX_sMQtBVBQsgUq4PsAjWwi1YQ_vDZokc3jSfgFzvESg_QaA/exec";
+
+  const statusDiv = document.getElementById('status');
+  const tbody = document.getElementById('queueBody');
 
   async function loadQueue() {
-    const statusEl = document.getElementById('status');
-    statusEl.textContent = "Loading queue...";
-    statusEl.className = "";
+    statusDiv.textContent = "Loading queue data...";
+    statusDiv.className = "";
 
     try {
-      console.log("[DEBUG] Fetching queue data from:", SCRIPT_URL + "?action=display");
-      const res = await fetch(SCRIPT_URL + "?action=display", { 
-        mode: 'no-cors',
-        cache: 'no-cache'  // prevent browser caching old data
-      });
-      
-      // We can't read body in no-cors mode, but if fetch didn't throw → request was sent
-      console.log("[DEBUG] Display fetch sent (no-cors mode – no response body readable)");
-      statusEl.textContent = "Queue data requested (refreshing every 15s) – check sheet manually if not updating";
+      console.log("[DEBUG] Fetching from:", SCRIPT_URL + "?action=display");
+      const res = await fetch(SCRIPT_URL + "?action=display", { mode: 'no-cors', cache: 'no-cache' });
+      console.log("[DEBUG] Fetch sent (no-cors mode)");
+
+      // Since no-cors → can't read body, assume data is coming and refresh will show it
+      statusDiv.textContent = "Data requested – waiting for refresh (check sheet if no change)";
     } catch (e) {
-      console.error("[ERROR] Load queue failed:", e);
-      statusEl.textContent = "Error loading queue: " + e.message;
-      statusEl.className = "error";
+      console.error("[ERROR] Fetch failed:", e);
+      statusDiv.textContent = "Error: " + e.message;
+      statusDiv.className = "error";
+      tbody.innerHTML = '<tr><td colspan="7" class="no-data">Failed to load – check console (F12)</td></tr>';
     }
   }
 
-  async function processStudent(rowIndex) {
-    if (!confirm("Start processing this student?")) return;
+  // Initial + auto refresh
+  loadQueue();
+  setInterval(loadQueue, 15000);
 
+  async function processStudent(rowIndex) {
+    if (!confirm("Start processing?")) return;
     try {
-      console.log("[DEBUG] Sending process request for row:", rowIndex);
-      await fetch(SCRIPT_URL + "?action=process&row=" + rowIndex, {
-        mode: 'no-cors',
-        cache: 'no-cache'
-      });
-      console.log("[DEBUG] Process request sent");
-      alert("Processing request sent! Check the Google Sheet column J or wait for refresh.");
+      console.log("[DEBUG] Process row " + rowIndex);
+      await fetch(SCRIPT_URL + "?action=process&row=" + rowIndex, { mode: 'no-cors' });
+      alert("Request sent – status should update soon (refresh or check sheet)");
       loadQueue();
     } catch (e) {
-      console.error("[ERROR] Process failed:", e);
-      alert("Network error – open F12 → Console tab and see red messages");
+      console.error(e);
+      alert("Error – see console");
     }
   }
 
   async function finishStudent(rowIndex) {
-    if (!confirm("Finish and remove this student from active queue?")) return;
-
+    if (!confirm("Finish now?")) return;
     try {
-      console.log("[DEBUG] Sending finish request for row:", rowIndex);
-      await fetch(SCRIPT_URL + "?action=finish&row=" + rowIndex, {
-        mode: 'no-cors',
-        cache: 'no-cache'
-      });
-      console.log("[DEBUG] Finish request sent");
-      alert("Finish request sent! Row should now be Finished in the sheet.");
+      console.log("[DEBUG] Finish row " + rowIndex);
+      await fetch(SCRIPT_URL + "?action=finish&row=" + rowIndex, { mode: 'no-cors' });
+      alert("Request sent – entry should be finished");
       loadQueue();
     } catch (e) {
-      console.error("[ERROR] Finish failed:", e);
-      alert("Network error – check console (F12)");
+      console.error(e);
+      alert("Error – see console");
     }
   }
-
-  // Start loading
-  loadQueue();
-  setInterval(loadQueue, 15000);
 </script>
 </body>
 </html>
-
