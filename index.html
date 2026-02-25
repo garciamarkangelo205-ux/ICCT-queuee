@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ICCT Registrar Queue System</title>
+  <style>
+    body { 
+      font-family: Arial, sans-serif; 
+      background: #f0f2f5; 
+      margin: 0; 
+      padding: 0; 
+      display: flex; 
+      justify-content: center; 
+      align-items: center; 
+      min-height: 100vh; 
+    }
+    .container { 
+      text-align: center; 
+      background: white; 
+      padding: 50px 40px; 
+      border-radius: 16px; 
+      box-shadow: 0 8px 30px rgba(0,0,0,0.15); 
+      max-width: 500px; 
+    }
+    h1 { 
+      color: #1e3a8a; 
+      margin-bottom: 40px; 
+    }
+    .btn { 
+      display: block; 
+      width: 100%; 
+      padding: 20px; 
+      margin: 20px 0; 
+      font-size: 22px; 
+      font-weight: bold; 
+      color: white; 
+      border: none; 
+      border-radius: 10px; 
+      cursor: pointer; 
+      text-decoration: none; 
+      transition: transform 0.2s, box-shadow 0.2s; 
+    }
+    .btn:hover { 
+      transform: translateY(-3px); 
+      box-shadow: 0 10px 20px rgba(0,0,0,0.2); 
+    }
+    .student-btn { background: #28a745; } /* Green */
+    .staff-btn   { background: #dc3545; } /* Red */
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>ICCT Registrar Queue System</h1>
+
+    <a href="book.html" class="btn student-btn">I'm a Student</a>
+    <a href="staff.html" class="btn staff-btn">I'm Staff (Admin)</a>
+  </div>
+</body>
+</html>
