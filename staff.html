@@ -39,7 +39,7 @@
         </tr>
       </thead>
       <tbody id="queueBody">
-        <tr><td colspan="7" style="text-align:center; color:#777;">Loading...</td></tr>
+        <tr><td colspan="7" style="text-align:center; color:#777;">Loading data... (refresh if stuck)</td></tr>
       </tbody>
     </table>
 
@@ -49,7 +49,6 @@
   </div>
 
 <script>
-  // Use THE SAME URL as in queue.html (copy it from there if different)
   const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzfRtNHDKV_BRxVMVX_sMQtBVBQsgUq4PsAjWwi1YQ_vDZokc3jSfgFzvESg_QaA_Kw9A/exec";
 
   const statusDiv = document.getElementById('status');
@@ -60,91 +59,59 @@
     statusDiv.className = "";
 
     try {
-      console.log("[DEBUG] Fetching from:", SCRIPT_URL + "?action=display");
-      const res = await fetch(SCRIPT_URL + "?action=display", { mode: 'no-cors', cache: 'no-cache' });
-      console.log("[DEBUG] Fetch sent (no-cors mode)");
+      console.log("[DEBUG] Starting fetch to:", SCRIPT_URL + "?action=display");
 
-      // Since no-cors → can't read body, assume data is coming and refresh will show it
-      statusDiv.textContent = "Data requested – waiting for refresh (check sheet if no change)";
+      const res = await fetch(SCRIPT_URL + "?action=display", {
+        mode: 'no-cors',
+        cache: 'no-cache'
+      });
+
+      console.log("[DEBUG] Fetch completed (no-cors mode - cannot read response body)");
+
+      // We cannot read data here, so we show a message
+      statusDiv.textContent = "Data fetch sent – but cannot display automatically due to browser security (no-cors mode). Check Google Sheet or live queue page.";
+      statusDiv.className = "";
+
+      // Optional: clear table or show placeholder
+      tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; color:#777;">Data sent, but table cannot load in no-cors mode. See sheet for status.</td></tr>';
+
     } catch (e) {
-      console.error("[ERROR] Fetch failed:", e);
-      statusDiv.textContent = "Error: " + e.message;
+      console.error("[ERROR] Fetch failed completely:", e);
+      statusDiv.textContent = "Network error: " + e.message;
       statusDiv.className = "error";
-      tbody.innerHTML = '<tr><td colspan="7" class="no-data">Failed to load – check console (F12)</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; color:#777;">Failed to connect – check console (F12)</td></tr>';
     }
   }
 
-  // Initial + auto refresh
-  async function loadQueue() {
-  const statusEl = document.getElementById('status');
-  statusEl.textContent = "Loading queue data...";
-  statusEl.className = "";
+  // Start loading
+  loadQueue();
+  setInterval(loadQueue, 15000);
 
-  try {
-    console.log("[DEBUG] Fetching queue with cors mode:", SCRIPT_URL + "?action=display");
-    
-    const res = await fetch(SCRIPT_URL + "?action=display", {
-      mode: 'cors',
-      cache: 'no-cache',
-      credentials: 'omit'   // helps avoid auth cookie issues
-    });
-
-    console.log("[DEBUG] Response status:", res.status);
-
-    if (!res.ok) {
-      throw new Error(`Server returned ${res.status}`);
+  async function processStudent(rowIndex) {
+    if (!confirm("Start processing this student?")) return;
+    try {
+      console.log("[DEBUG] Sending process request for row:", rowIndex);
+      await fetch(SCRIPT_URL + "?action=process&row=" + rowIndex, { mode: 'no-cors' });
+      alert("Processing request sent! Check Google Sheet column J or live queue page.");
+      loadQueue();
+    } catch (e) {
+      console.error("[ERROR] Process request failed:", e);
+      alert("Error sending request – see console (F12)");
     }
-
-    const data = await res.json();
-    console.log("[DEBUG] Received data:", data);
-
-    const tbody = document.getElementById('queueBody');
-    tbody.innerHTML = "";
-
-    if (data.length <= 1) {
-      tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; color:#777;">No entries yet</td></tr>';
-      statusEl.textContent = "No entries in queue";
-      return;
-    }
-
-    // Process rows (skip header row 0)
-    const rows = data.slice(1);
-    rows.forEach((row, i) => {
-      if (row.length < 10) return;
-
-      const status = row[9] || "Pending"; // column J = index 9
-
-      const tr = document.createElement('tr');
-      if (status === "Finished") tr.classList.add('served');
-
-      tr.innerHTML = `
-        <td>#${row[8] || (i+1)}</td>
-        <td>${row[3] || ''} ${row[4] || ''}</td>
-        <td>${row[2] || '—'}</td>
-        <td>${row[0] || ''} ${row[1] || ''}</td>
-        <td>${row[7] || '—'}</td>
-        <td>${status}</td>
-        <td>
-          ${status === "Pending" ? `<button class="serve-btn process-btn" onclick="processStudent(${i+2})">Start Processing</button>` : ''}
-          ${status === "Processing" ? `<button class="serve-btn finish-btn" onclick="finishStudent(${i+2})">Finish</button>` : ''}
-          ${status === "Finished" ? 'Finished' : ''}
-        </td>
-      `;
-      tbody.appendChild(tr);
-    });
-
-    statusEl.textContent = `Loaded ${rows.length} entries • auto-refresh every 15s`;
-
-  } catch (e) {
-    console.error("[ERROR] Queue load failed:", e);
-    statusEl.textContent = "Failed to load queue: " + e.message;
-    statusEl.className = "error";
-    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; color:#777;">Failed to load – see console (F12)</td></tr>';
   }
-}
+
+  async function finishStudent(rowIndex) {
+    if (!confirm("Finish and remove from queue?")) return;
+    try {
+      console.log("[DEBUG] Sending finish request for row:", rowIndex);
+      await fetch(SCRIPT_URL + "?action=finish&row=" + rowIndex, { mode: 'no-cors' });
+      alert("Finish request sent! Check Google Sheet.");
+      loadQueue();
+    } catch (e) {
+      console.error("[ERROR] Finish request failed:", e);
+      alert("Error – see console (F12)");
+    }
+  }
 </script>
 </body>
 </html>
-
-
-
