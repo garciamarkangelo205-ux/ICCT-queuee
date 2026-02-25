@@ -12,17 +12,39 @@
     th, td { padding:12px; border:1px solid #ddd; text-align:left; }
     th { background:#d32f2f; color:white; }
     .served { background:#e0e0e0; text-decoration:line-through; color:#777; }
-    .serve-btn { background:#4CAF50; color:white; border:none; padding:8px 16px; border-radius:4px; cursor:pointer; margin-right:8px; }
-    .process-btn { background:#2196F3; color:white; }
-    .finish-btn { background:#ff9800; color:white; }
+    .serve-btn { 
+      color:white; 
+      border:none; 
+      padding:8px 16px; 
+      border-radius:4px; 
+      cursor:pointer; 
+      margin-right:8px; 
+      font-weight:bold;
+    }
+    .process-btn { background:#2196F3; }
+    .finish-btn  { background:#ff9800; }
     #status { text-align:center; margin:20px 0; font-weight:bold; font-size:18px; color:#555; }
     .error { color:#d32f2f; }
+    .refresh-btn {
+      display:block;
+      margin:15px auto;
+      padding:10px 20px;
+      background:#673ab7;
+      color:white;
+      border:none;
+      border-radius:6px;
+      cursor:pointer;
+      font-size:16px;
+    }
   </style>
 </head>
 <body>
   <div class="container">
     <h1>🛠️ Registrar Staff Queue Control</h1>
     <p id="status">Loading queue...</p>
+    
+    <button class="refresh-btn" onclick="loadQueue()">Refresh Now</button>
+
     <table id="queueTable">
       <thead>
         <tr>
@@ -44,58 +66,72 @@
   </div>
 
 <script>
-  // REPLACE WITH YOUR ACTUAL WEB APP URL
+  // ────────────────────────────────────────────────
+  // YOUR ACTUAL SCRIPT URL – make sure this is correct!
   const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzfRtNHDKV_BRxVMVX_sMQtBVBQsgUq4PsAjWwi1YQ_vDZokc3jSfgFzvESg_QaA_Kw9A/exec";
+  // ────────────────────────────────────────────────
 
   async function loadQueue() {
-    document.getElementById('status').textContent = "Loading queue...";
+    const statusEl = document.getElementById('status');
+    statusEl.textContent = "Loading queue...";
+    statusEl.className = "";
+
     try {
-      const res = await fetch(SCRIPT_URL + "?action=display", { mode: 'no-cors' });
-      // With no-cors we can't check res.ok or read json → assume it worked if no error
-      // Table will update on next interval anyway
-      document.getElementById('status').textContent = "Queue loaded (refreshing every 15s)";
+      console.log("[DEBUG] Fetching queue data from:", SCRIPT_URL + "?action=display");
+      const res = await fetch(SCRIPT_URL + "?action=display", { 
+        mode: 'no-cors',
+        cache: 'no-cache'  // prevent browser caching old data
+      });
+      
+      // We can't read body in no-cors mode, but if fetch didn't throw → request was sent
+      console.log("[DEBUG] Display fetch sent (no-cors mode – no response body readable)");
+      statusEl.textContent = "Queue data requested (refreshing every 15s) – check sheet manually if not updating";
     } catch (e) {
-      document.getElementById('status').textContent = "Error loading: " + e.message;
-      console.error("Load error:", e);
+      console.error("[ERROR] Load queue failed:", e);
+      statusEl.textContent = "Error loading queue: " + e.message;
+      statusEl.className = "error";
     }
   }
-
-  // Call loadQueue initially and every 15 seconds
-  loadQueue();
-  setInterval(loadQueue, 15000);
 
   async function processStudent(rowIndex) {
     if (!confirm("Start processing this student?")) return;
 
     try {
+      console.log("[DEBUG] Sending process request for row:", rowIndex);
       await fetch(SCRIPT_URL + "?action=process&row=" + rowIndex, {
-        mode: 'no-cors'   // ← Key fix: send request without waiting for readable response
+        mode: 'no-cors',
+        cache: 'no-cache'
       });
-      alert("Started Processing! (Page will update soon)");
-      loadQueue();  // Refresh table
+      console.log("[DEBUG] Process request sent");
+      alert("Processing request sent! Check the Google Sheet column J or wait for refresh.");
+      loadQueue();
     } catch (e) {
-      console.error("Process error:", e);
-      alert("Network error – check console (F12)");
+      console.error("[ERROR] Process failed:", e);
+      alert("Network error – open F12 → Console tab and see red messages");
     }
   }
 
   async function finishStudent(rowIndex) {
-    if (!confirm("Finish and remove from queue?")) return;
+    if (!confirm("Finish and remove this student from active queue?")) return;
 
     try {
+      console.log("[DEBUG] Sending finish request for row:", rowIndex);
       await fetch(SCRIPT_URL + "?action=finish&row=" + rowIndex, {
-        mode: 'no-cors'
+        mode: 'no-cors',
+        cache: 'no-cache'
       });
-      alert("Finished! Entry removed from active queue.");
+      console.log("[DEBUG] Finish request sent");
+      alert("Finish request sent! Row should now be Finished in the sheet.");
       loadQueue();
     } catch (e) {
-      console.error("Finish error:", e);
+      console.error("[ERROR] Finish failed:", e);
       alert("Network error – check console (F12)");
     }
   }
+
+  // Start loading
+  loadQueue();
+  setInterval(loadQueue, 15000);
 </script>
 </body>
 </html>
-
-
-
