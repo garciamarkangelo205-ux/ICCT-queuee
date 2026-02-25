@@ -37,9 +37,14 @@
         <tr><td colspan="5" class="no-data">Waiting for data...</td></tr>
       </tbody>
     </table>
+
+    <div style="text-align:center; margin-top:30px;">
+      <a href="./" style="color:#1e3a8a; font-weight:bold;">← Back to Booking</a>
+    </div>
   </div>
 
 <script>
+  // ←←← REPLACE THIS URL WITH YOUR LATEST WEB APP URL ←←←
   const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxCci-2Yql8JxqZ5ghxPRq312Jz-HTZzz1PNIvPebrBKm55SfKSnchh7dSs1zKJUWw4fQ/exec";
 
   const statusDiv = document.getElementById('status');
@@ -50,31 +55,26 @@
     statusDiv.className = "";
 
     try {
-      const res = await fetch(SCRIPT_URL + "?action=display");
-      if (!res.ok) {
-        throw new Error(`Server responded with HTTP ${res.status}`);
-      }
+      const res = await fetch(SCRIPT_URL + "?action=display", { mode: 'cors' });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
       const data = await res.json();
 
       tbody.innerHTML = "";
-
       if (data.length <= 1) {
-        tbody.innerHTML = '<tr><td colspan="5" class="no-data">No queue entries yet. Submit a test from the booking page.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="5" class="no-data">No queue entries yet.</td></tr>';
         statusDiv.textContent = "Queue is empty";
         return;
       }
 
-      // Skip header row, filter out completely empty/invalid rows
-      let rows = data.slice(1).filter(row => row.length >= 9 && row.some(cell => cell && cell.toString().trim() !== ""));
-
+      let rows = data.slice(1).filter(row => row.length >= 9 && row.some(cell => cell?.toString().trim()));
       if (rows.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="5" class="no-data">No valid queue entries found</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="5" class="no-data">No valid entries found</td></tr>';
         statusDiv.textContent = "No valid data";
         return;
       }
 
-      rows.reverse(); // newest entries first
+      rows.reverse(); // newest first
 
       rows.forEach((row, i) => {
         const tr = document.createElement('tr');
@@ -96,33 +96,17 @@
         tbody.appendChild(tr);
       });
 
-      statusDiv.textContent = `Loaded ${rows.length} entries (refreshes every 15s)`;
-
+      statusDiv.textContent = `Loaded ${rows.length} entries • refreshes every 15s`;
     } catch (e) {
       console.error("Queue load failed:", e);
       statusDiv.textContent = "Error loading queue: " + e.message;
       statusDiv.className = "error";
-      tbody.innerHTML = '<tr><td colspan="5" class="no-data">Failed to load data. Check console (F12) or submit a test entry first.</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="5" class="no-data">Failed to load. Check console (F12).</td></tr>';
     }
   }
 
-  // Initial load + auto-refresh
   loadQueue();
   setInterval(loadQueue, 15000);
 </script>
 </body>
 </html>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
