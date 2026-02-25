@@ -5,60 +5,138 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Staff Queue Control - ICCT Registrar</title>
   <style>
-    body { font-family: Arial, sans-serif; background:#f0f2f5; margin:0; padding:20px; }
-    .container { max-width: 1000px; margin:auto; background:white; padding:20px; border-radius:12px; box-shadow:0 4px 20px rgba(0,0,0,0.1); }
-    h1 { text-align:center; color:#d32f2f; }
-    table { width:100%; border-collapse:collapse; margin-top:20px; }
-    th, td { padding:12px; border:1px solid #ddd; text-align:left; }
-    th { background:#d32f2f; color:white; }
-    .served { background:#e0e0e0; text-decoration:line-through; color:#777; }
-    .serve-btn { background:#4CAF50; color:white; border:none; padding:8px 16px; border-radius:4px; cursor:pointer; margin-right:8px; }
-    .process-btn { background:#2196F3; color:white; }
-    .finish-btn { background:#ff9800; color:white; }
-    #status { text-align:center; margin:20px 0; font-weight:bold; font-size:18px; color:#555; }
-    .error { color:#d32f2f; }
+    body {
+      font-family: Arial, sans-serif;
+      background: #f0f2f5;
+      margin: 0;
+      padding: 15px;
+      line-height: 1.5;
+    }
+    .container {
+      max-width: 1000px;
+      margin: 0 auto;
+      background: white;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+    }
+    h1 {
+      text-align: center;
+      color: #d32f2f;
+      font-size: 1.8rem;
+      margin-bottom: 15px;
+    }
+    #status {
+      text-align: center;
+      margin: 15px 0;
+      font-weight: bold;
+      font-size: 1.1rem;
+      color: #555;
+    }
+    .error { color: #d32f2f; }
+    .table-wrapper {
+      overflow-x: auto;
+      margin-top: 15px;
+      -webkit-overflow-scrolling: touch;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 700px; /* forces horizontal scroll on small screens */
+    }
+    th, td {
+      padding: 12px 10px;
+      border: 1px solid #ddd;
+      text-align: left;
+      font-size: 0.95rem;
+    }
+    th {
+      background: #d32f2f;
+      color: white;
+      white-space: nowrap;
+    }
+    td {
+      white-space: nowrap;
+    }
+    .served {
+      background: #e0e0e0;
+      text-decoration: line-through;
+      color: #777;
+    }
+    .serve-btn {
+      color: white;
+      border: none;
+      padding: 10px 16px;
+      border-radius: 6px;
+      cursor: pointer;
+      margin-right: 8px;
+      font-weight: bold;
+      font-size: 0.95rem;
+      min-width: 100px; /* better touch target */
+    }
+    .process-btn { background: #2196F3; }
+    .finish-btn  { background: #ff9800; }
+
+    /* Mobile adjustments */
+    @media (max-width: 768px) {
+      body { padding: 10px; }
+      .container { padding: 15px; }
+      h1 { font-size: 1.5rem; }
+      th, td { padding: 10px 8px; font-size: 0.9rem; }
+      .serve-btn { padding: 10px 14px; font-size: 0.9rem; min-width: 90px; }
+      .table-wrapper { margin: 10px -15px 0; }
+      #status { font-size: 1rem; }
+    }
+
+    @media (max-width: 480px) {
+      h1 { font-size: 1.3rem; margin-bottom: 10px; }
+      th, td { padding: 8px 6px; font-size: 0.85rem; }
+      .serve-btn { padding: 8px 12px; font-size: 0.85rem; min-width: 80px; }
+    }
   </style>
 </head>
 <body>
   <div class="container">
     <h1>🛠️ Registrar Staff Queue Control</h1>
     <p id="status">Loading queue...</p>
-    <table id="queueTable">
-      <thead>
-        <tr>
-          <th>Queue #</th>
-          <th>Student Name</th>
-          <th>Student ID</th>
-          <th>Time</th>
-          <th>Method</th>
-          <th>Status</th>
-          <th>Action</th>
-        </tr>
-      </thead>
-      <tbody id="queueBody"></tbody>
-    </table>
+
+    <div class="table-wrapper">
+      <table id="queueTable">
+        <thead>
+          <tr>
+            <th>Queue #</th>
+            <th>Student Name</th>
+            <th>Student ID</th>
+            <th>Time</th>
+            <th>Method</th>
+            <th>Status</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody id="queueBody"></tbody>
+      </table>
+    </div>
+
     <div style="text-align:center; margin-top:30px;">
-      <a href="./" style="color:#1e3a8a; font-weight:bold;">← Back to Booking</a>
+      <a href="./" style="color:#1e3a8a; font-weight:bold; font-size:1.1rem;">← Back to Booking</a>
     </div>
   </div>
 
 <script>
-  // PASSWORD PROTECTION - CHANGE THIS PASSWORD TO YOUR OWN SECRET ONE
-  const STAFF_PASSWORD = "icctstaff2026"; // ← Change this to something only you/staff know!
+  // PASSWORD PROTECTION – CHANGE THIS TO YOUR SECRET PASSWORD
+  const STAFF_PASSWORD = "icctstaff2026"; // ← Change this!
 
-  // Ask for password immediately
   const entered = prompt("Enter staff password to access this page:");
 
   if (entered !== STAFF_PASSWORD) {
     alert("Incorrect password. Access denied.");
-    window.location.href = "./"; // Redirect to booking page
+    window.location.href = "./";
     throw new Error("Access denied - wrong password");
   }
 
-  // If password correct, continue loading the page
-  console.log("Staff access granted - loading queue control");
+  console.log("Staff access granted – loading queue control");
 
-  // YOUR SCRIPT URL (keep this as is or update if redeployed)
+  // YOUR SCRIPT URL
   const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzueR0PYlIrU_OdQ-IG1D0ISzJrAN47z4Fqmg2VYU6DOG4-8j5VjF5RY1BYP6izpz8DIw/exec";
 
   async function loadQueue() {
@@ -137,4 +215,3 @@
 </script>
 </body>
 </html>
-
