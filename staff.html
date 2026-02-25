@@ -37,64 +37,70 @@
       </thead>
       <tbody id="queueBody"></tbody>
     </table>
-
     <div style="text-align:center; margin-top:30px;">
       <a href="./" style="color:#1e3a8a; font-weight:bold;">← Back to Booking</a>
     </div>
   </div>
 
 <script>
-  const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzueR0PYlIrU_OdQ-IG1D0ISzJrAN47z4Fqmg2VYU6DOG4-8j5VjF5RY1BYP6izpz8DIw/exec"; // use your latest /exec URL
+  // ────────────────────────────────────────────────
+  // Simple password protection – change this password!
+  const STAFF_PASSWORD = "icctregistrar2026"; // ← Change to your own secret password
+
+  const enteredPassword = prompt("Enter staff password:");
+
+  if (enteredPassword !== STAFF_PASSWORD) {
+    alert("Incorrect password. Access denied.");
+    window.location.href = "./"; // redirect to booking page
+    // Stop script execution
+    throw new Error("Authentication failed");
+  }
+
+  // If password is correct → continue loading the page
+  console.log("Staff authenticated – loading queue control");
+
+  // ────────────────────────────────────────────────
+  // Your actual web app URL (replace if you redeployed)
+  const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzfRtNHDKV_BRxVMVX_sMQtBVBQsgUq4PsAjWwi1YQ_vDZokc3jSfgFzvESg_QaA_Kw9A/exec";
 
   async function loadQueue() {
-    const status = document.getElementById('status');
-    status.textContent = "Loading queue data...";
-
+    document.getElementById('status').textContent = "Loading queue...";
     try {
       const res = await fetch(SCRIPT_URL + "?action=display", { mode: 'cors' });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
-
       const tbody = document.getElementById('queueBody');
       tbody.innerHTML = "";
-
       if (data.length <= 1) {
         tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; color:#777;">No entries yet</td></tr>';
-        status.textContent = "No entries";
+        document.getElementById('status').textContent = "No entries";
         return;
       }
-
-      const rows = data; // already processed with row number at end
-      rows.forEach(row => {
-        if (row.length < 11) return; // need 10 columns + row number
-
-        const sheetRow = row[10]; // last element = actual sheet row
-        const statusVal = row[9] || "Pending";
-
+      const rows = data.slice(1);
+      rows.forEach((row, i) => {
+        if (row.length < 10) return;
+        const status = row[9] || "Pending";
         const tr = document.createElement('tr');
-        if (statusVal === "Finished") tr.classList.add('served');
-
+        if (status === "Finished") tr.classList.add('served');
         tr.innerHTML = `
-          <td>#${row[8] || '—'}</td>
-          <td>${row[3] || ''} ${row[4] || ''}</td>
-          <td>${row[2] || '—'}</td>
-          <td>${row[0] || ''} ${row[1] || ''}</td>
-          <td>${row[7] || '—'}</td>
-          <td>${statusVal}</td>
+          <td>#${row[8] || (i+1)}</td>
+          <td>${row[3]} ${row[4]}</td>
+          <td>${row[2]}</td>
+          <td>${row[0]} ${row[1]}</td>
+          <td>${row[7]}</td>
+          <td>${status}</td>
           <td>
-            ${statusVal === "Pending" ? `<button class="serve-btn process-btn" onclick="processStudent(${sheetRow})">Start Processing</button>` : ''}
-            ${statusVal === "Processing" ? `<button class="serve-btn finish-btn" onclick="finishStudent(${sheetRow})">Finish</button>` : ''}
-            ${statusVal === "Finished" ? 'Finished' : ''}
+            ${status === "Pending" ? `<button class="serve-btn process-btn" onclick="processStudent(${i+2})">Start Processing</button>` : ''}
+            ${status === "Processing" ? `<button class="serve-btn finish-btn" onclick="finishStudent(${i+2})">Finish</button>` : ''}
+            ${status === "Finished" ? 'Finished' : ''}
           </td>
         `;
         tbody.appendChild(tr);
       });
-
-      status.textContent = `Showing ${rows.length} entries`;
+      document.getElementById('status').textContent = `Showing ${rows.length} entries`;
     } catch (e) {
-      console.error("Load error:", e);
-      status.textContent = "Error loading queue: " + e.message;
-      status.className = "error";
+      document.getElementById('status').textContent = "Error: " + e.message;
+      console.error(e);
     }
   }
 
@@ -106,7 +112,7 @@
         alert("Now Processing!");
         loadQueue();
       } else {
-        alert("Failed to update (HTTP " + res.status + ")");
+        alert("Failed to update");
       }
     } catch (e) {
       alert("Error: " + e.message);
@@ -118,10 +124,10 @@
     try {
       const res = await fetch(SCRIPT_URL + "?action=finish&row=" + rowIndex, { mode: 'cors' });
       if (res.ok) {
-        alert("Finished & removed!");
+        alert("Finished & removed from active queue!");
         loadQueue();
       } else {
-        alert("Failed to update (HTTP " + res.status + ")");
+        alert("Failed to update");
       }
     } catch (e) {
       alert("Error: " + e.message);
@@ -131,9 +137,5 @@
   loadQueue();
   setInterval(loadQueue, 15000);
 </script>
-
 </body>
 </html>
-
-
-
