@@ -144,24 +144,21 @@
   </div>
 
 <script>
-  // PASSWORD PROTECTION – CHANGE THIS TO YOUR SECRET PASSWORD
-  const STAFF_PASSWORD = "icctstaff2026"; // ← Change this!
-
-  const entered = prompt("Enter staff password to access this page:");
-
+  // PASSWORD PROTECTION
+  const STAFF_PASSWORD = "icctstaff2026";
+  const entered = prompt("Enter staff password:");
   if (entered !== STAFF_PASSWORD) {
-    alert("Incorrect password. Access denied.");
+    alert("Wrong password. Access denied.");
     window.location.href = "./";
-    throw new Error("Access denied - wrong password");
+    throw new Error("Access denied");
   }
+  console.log("Staff logged in");
 
-  console.log("Staff access granted – loading queue control");
-
-  // YOUR SCRIPT URL
   const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzueR0PYlIrU_OdQ-IG1D0ISzJrAN47z4Fqmg2VYU6DOG4-8j5VjF5RY1BYP6izpz8DIw/exec";
 
   async function loadQueue() {
-    document.getElementById('status').textContent = "Loading queue...";
+    const status = document.getElementById('status');
+    status.textContent = "Loading queue...";
     try {
       const res = await fetch(SCRIPT_URL + "?action=display", { mode: 'cors' });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -169,72 +166,69 @@
       const tbody = document.getElementById('queueBody');
       tbody.innerHTML = "";
       if (data.length <= 1) {
-        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; color:#777;">No entries yet</td></tr>';
-        document.getElementById('status').textContent = "No entries";
+        tbody.innerHTML = '<tr><td colspan="7">No entries yet</td></tr>';
+        status.textContent = "No entries";
         return;
       }
       const rows = data.slice(1);
       rows.forEach((row, i) => {
         if (row.length < 10) return;
-        const status = row[9] || "Pending";
+        const statusVal = row[9] || "Pending";
         const tr = document.createElement('tr');
-        if (status === "Finished") tr.classList.add('served');
+        if (statusVal === "Finished") tr.classList.add('served');
         tr.innerHTML = `
           <td>#${row[8] || (i+1)}</td>
-          <td>${row[3]} ${row[4]}</td>
-          <td>${row[2]}</td>
-          <td>${row[0]} ${row[1]}</td>
-          <td>${row[7]}</td>
-          <td>${status}</td>
+          <td>${row[3] || ''} ${row[4] || ''}</td>
+          <td>${row[2] || '—'}</td>
+          <td>${row[0] || ''} ${row[1] || ''}</td>
+          <td>${row[7] || '—'}</td>
+          <td>${statusVal}</td>
           <td>
-            ${status === "Pending" ? `<button class="serve-btn process-btn" onclick="processStudent(${i+2})">Start Processing</button>` : ''}
-            ${status === "Processing" ? `<button class="serve-btn finish-btn" onclick="finishStudent(${i+2})">Finish</button>` : ''}
-            ${status === "Finished" ? 'Finished' : ''}
+            ${statusVal === "Pending" ? `<button class="serve-btn process-btn" onclick="processStudent(${i+2})">Start Processing</button>` : ''}
+            ${statusVal === "Processing" ? `<button class="serve-btn finish-btn" onclick="finishStudent(${i+2})">Finish</button>` : ''}
+            ${statusVal === "Finished" ? 'Finished' : ''}
           </td>
         `;
         tbody.appendChild(tr);
       });
-      document.getElementById('status').textContent = `Showing ${rows.length} entries`;
+      status.textContent = `Showing ${rows.length} entries`;
     } catch (e) {
-      document.getElementById('status').textContent = "Error: " + e.message;
-      console.error(e);
+      console.error("Load error:", e);
+      status.textContent = "Error: " + e.message;
     }
   }
 
   async function processStudent(rowIndex) {
-    if (!confirm("Start processing this student?")) return;
+    if (!confirm("Start processing?")) return;
     try {
+      console.log("Sending process for row", rowIndex);
       const res = await fetch(SCRIPT_URL + "?action=process&row=" + rowIndex, { mode: 'cors' });
       if (res.ok) {
-        alert("Now Processing!");
+        alert("Processing started!");
         loadQueue();
       } else {
-        alert("Failed to update");
+        alert("Failed (HTTP " + res.status + ")");
       }
     } catch (e) {
-      alert("Error: " + e.message);
+      alert("Network error: " + e.message);
+      console.error(e);
     }
   }
 
   async function finishStudent(rowIndex) {
-    if (!confirm("Finish and remove from queue?")) return;
+    if (!confirm("Finish now?")) return;
     try {
+      console.log("Sending finish for row", rowIndex);
       const res = await fetch(SCRIPT_URL + "?action=finish&row=" + rowIndex, { mode: 'cors' });
       if (res.ok) {
-        alert("Finished & removed from active queue!");
+        alert("Finished!");
         loadQueue();
       } else {
-        alert("Failed to update");
+        alert("Failed (HTTP " + res.status + ")");
       }
     } catch (e) {
-      alert("Error: " + e.message);
-    }
-  }
-
-  // Logout function
-  function logout() {
-    if (confirm("Are you sure you want to log out?")) {
-      window.location.href = "./"; // Redirect to main page (index.html)
+      alert("Network error: " + e.message);
+      console.error(e);
     }
   }
 
@@ -243,3 +237,4 @@
 </script>
 </body>
 </html>
+
