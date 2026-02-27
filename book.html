@@ -15,24 +15,33 @@
     #message { margin-top:20px; text-align:center; font-weight:bold; font-size:18px; }
     .success { color: #166534; }
     .error { color: #991b1b; }
+    .field-error { color: #991b1b; font-size: 0.9rem; margin-top: 5px; display: none; }
   </style>
 </head>
 <body>
   <div class="container">
     <h1>📋 Registrar Queue Booking</h1>
     <form id="queueForm">
-      <label>Student ID</label>
+      <label>Student ID <span style="color:red;">(max 11 characters)</span></label>
       <input type="text" id="studentID" required placeholder="CA20230000">
+      <div id="studentIDError" class="field-error">Invalid Student ID (max 11 characters)</div>
+
       <label>First Name</label>
       <input type="text" id="firstName" required>
+
       <label>Last Name</label>
       <input type="text" id="lastName" required>
-      <label>Class / Section</label>
+
+      <label>Class / Section <span style="color:red;">(max 11 characters)</span></label>
       <input type="text" id="class" placeholder="LFCA322A029">
+      <div id="classError" class="field-error">Invalid Class/Section (max 11 characters)</div>
+
       <label>Email (for queue notifications)</label>
       <input type="email" id="email" placeholder="yourname@gmail.com" required>
+
       <button type="submit">JOIN QUEUE NOW</button>
     </form>
+
     <div id="message"></div>
 
     <div style="text-align:center; margin-top:30px;">
@@ -44,19 +53,44 @@
   </div>
 
 <script>
-  const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxLnliRQma5mtg6ys6TKsDolVyEer6gBhpSGeiamrg3pG5LqurBQuiXSxcDxcoFGI66bw/exec";
+  const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzueR0PYlIrU_OdQ-IG1D0ISzJrAN47z4Fqmg2VYU6DOG4-8j5VjF5RY1BYP6izpz8DIw/exec";
 
   document.getElementById('queueForm').addEventListener('submit', async function(e) {
     e.preventDefault();
+
     const msg = document.getElementById('message');
-    msg.textContent = "Submitting...";
+    msg.textContent = "Validating...";
     msg.className = "";
 
+    // Hide previous field errors
+    document.getElementById('studentIDError').style.display = 'none';
+    document.getElementById('classError').style.display = 'none';
+
+    // Validate Student ID (max 11 chars)
+    const studentID = document.getElementById('studentID').value.trim();
+    if (studentID.length > 11) {
+      document.getElementById('studentIDError').style.display = 'block';
+      msg.textContent = "Please fix the errors above.";
+      msg.className = "error";
+      return;
+    }
+
+    // Validate Class/Section (max 11 chars)
+    const classSection = document.getElementById('class').value.trim();
+    if (classSection.length > 11) {
+      document.getElementById('classError').style.display = 'block';
+      msg.textContent = "Please fix the errors above.";
+      msg.className = "error";
+      return;
+    }
+
+    msg.textContent = "Submitting...";
+
     const formData = new FormData();
-    formData.append('studentID', document.getElementById('studentID').value.trim());
+    formData.append('studentID', studentID);
     formData.append('firstName', document.getElementById('firstName').value.trim());
     formData.append('lastName', document.getElementById('lastName').value.trim());
-    formData.append('class', document.getElementById('class').value.trim());
+    formData.append('class', classSection);
     formData.append('email', document.getElementById('email').value.trim());
     formData.append('method', 'Online');
 
@@ -64,7 +98,7 @@
       const res = await fetch(SCRIPT_URL, {
         method: 'POST',
         body: formData,
-        mode: 'cors',
+        mode: 'cors', // try 'cors' first; switch to 'no-cors' if still fails
         redirect: 'follow'
       });
 
@@ -79,17 +113,10 @@
       }
     } catch (err) {
       console.error("Submission error:", err);
-      msg.textContent = "❌ " + (err.message || "Submission failed. Try again.");
+      msg.textContent = "❌ " + (err.message || "Submission failed. Try again or check console (F12).");
       msg.className = "error";
     }
   });
 </script>
 </body>
 </html>
-
-
-
-
-
-
-
