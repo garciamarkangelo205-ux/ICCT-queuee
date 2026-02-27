@@ -22,9 +22,9 @@
   <div class="container">
     <h1>📋 Registrar Queue Booking</h1>
     <form id="queueForm">
-      <label>Student ID <span style="color:red;">(max 11 characters)</span></label>
+      <label>Student ID</label>
       <input type="text" id="studentID" required placeholder="CA20230000">
-      <div id="studentIDError" class="field-error">Invalid Student ID (max 11 characters)</div>
+      <div id="studentIDError" class="field-error">Invalid Student ID (must be exactly 11 characters)</div>
 
       <label>First Name</label>
       <input type="text" id="firstName" required>
@@ -32,7 +32,7 @@
       <label>Last Name</label>
       <input type="text" id="lastName" required>
 
-      <label>Class / Section <span style="color:red;">(max 11 characters)</span></label>
+      <label>Class / Section</label>
       <input type="text" id="class" placeholder="LFCA322A029">
       <div id="classError" class="field-error">Invalid Class/Section (max 11 characters)</div>
 
@@ -66,16 +66,16 @@
     document.getElementById('studentIDError').style.display = 'none';
     document.getElementById('classError').style.display = 'none';
 
-    // Validate Student ID (max 11 chars)
+    // Validate Student ID - MUST be EXACTLY 11 characters
     const studentID = document.getElementById('studentID').value.trim();
-    if (studentID.length > 11) {
+    if (studentID.length !== 11) {
       document.getElementById('studentIDError').style.display = 'block';
       msg.textContent = "Please fix the errors above.";
       msg.className = "error";
       return;
     }
 
-    // Validate Class/Section (max 11 chars)
+    // Validate Class/Section - max 11 characters
     const classSection = document.getElementById('class').value.trim();
     if (classSection.length > 11) {
       document.getElementById('classError').style.display = 'block';
@@ -98,7 +98,7 @@
       const res = await fetch(SCRIPT_URL, {
         method: 'POST',
         body: formData,
-        mode: 'cors', // try 'cors' first; switch to 'no-cors' if still fails
+        mode: 'cors', // try cors first; change to 'no-cors' if "Failed to fetch" appears
         redirect: 'follow'
       });
 
