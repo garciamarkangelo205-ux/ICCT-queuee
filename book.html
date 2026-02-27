@@ -24,17 +24,19 @@
     <form id="queueForm">
       <label>Student ID</label>
       <input type="text" id="studentID" required placeholder="CA20230000">
-      <div id="studentIDError" class="field-error">Invalid Student ID (must be exactly 11 characters)</div>
+      <div id="studentIDError" class="field-error">Invalid</div>
 
       <label>First Name</label>
       <input type="text" id="firstName" required>
+      <div id="firstNameError" class="field-error">Invalid</div>
 
       <label>Last Name</label>
       <input type="text" id="lastName" required>
+      <div id="lastNameError" class="field-error">Invalid</div>
 
       <label>Class / Section</label>
       <input type="text" id="class" placeholder="LFCA322A029">
-      <div id="classError" class="field-error">Invalid Class/Section (max 11 characters)</div>
+      <div id="classError" class="field-error">Invalid</div>
 
       <label>Email (for queue notifications)</label>
       <input type="email" id="email" placeholder="yourname@gmail.com" required>
@@ -64,21 +66,41 @@
 
     // Hide previous field errors
     document.getElementById('studentIDError').style.display = 'none';
+    document.getElementById('firstNameError').style.display = 'none';
+    document.getElementById('lastNameError').style.display = 'none';
     document.getElementById('classError').style.display = 'none';
 
-    // Validate Student ID - MUST be EXACTLY 11 characters
+    let hasError = false;
+
+    // Student ID: exactly 11 characters
     const studentID = document.getElementById('studentID').value.trim();
     if (studentID.length !== 11) {
       document.getElementById('studentIDError').style.display = 'block';
-      msg.textContent = "Please fix the errors above.";
-      msg.className = "error";
-      return;
+      hasError = true;
     }
 
-    // Validate Class/Section - max 11 characters
+    // First Name: max 20 characters (no numbers/special chars allowed)
+    const firstName = document.getElementById('firstName').value.trim();
+    if (firstName.length > 20 || /[^a-zA-Z\s-]/.test(firstName)) {
+      document.getElementById('firstNameError').style.display = 'block';
+      hasError = true;
+    }
+
+    // Last Name: max 20 characters (no numbers/special chars allowed)
+    const lastName = document.getElementById('lastName').value.trim();
+    if (lastName.length > 20 || /[^a-zA-Z\s-]/.test(lastName)) {
+      document.getElementById('lastNameError').style.display = 'block';
+      hasError = true;
+    }
+
+    // Class / Section: max 11 characters
     const classSection = document.getElementById('class').value.trim();
     if (classSection.length > 11) {
       document.getElementById('classError').style.display = 'block';
+      hasError = true;
+    }
+
+    if (hasError) {
       msg.textContent = "Please fix the errors above.";
       msg.className = "error";
       return;
@@ -88,8 +110,8 @@
 
     const formData = new FormData();
     formData.append('studentID', studentID);
-    formData.append('firstName', document.getElementById('firstName').value.trim());
-    formData.append('lastName', document.getElementById('lastName').value.trim());
+    formData.append('firstName', firstName);
+    formData.append('lastName', lastName);
     formData.append('class', classSection);
     formData.append('email', document.getElementById('email').value.trim());
     formData.append('method', 'Online');
@@ -98,7 +120,7 @@
       const res = await fetch(SCRIPT_URL, {
         method: 'POST',
         body: formData,
-        mode: 'cors', // try cors first; change to 'no-cors' if "Failed to fetch" appears
+        mode: 'cors',
         redirect: 'follow'
       });
 
